@@ -28,6 +28,7 @@ var min;
 var max;
 var interval;
 var majorInterval = 0;
+var indexInterval = 0;
 var thresholds;
 var contour = d3.contours()
     .size([width, height]);
@@ -75,6 +76,48 @@ window.onresize = function () {
 }
 
 /* UI event handlers */
+
+d3.select('#presets').selectAll('option.style')
+  .data(Object.keys(styles))
+  .enter()
+  .append('option')
+  .attr('class', 'style')
+  .attr('value', function (d){ return d })
+  .html(function (d){ return styles[d].name });
+
+d3.select('#presets').on('change', function () {
+  var style = styles[this.value];
+  if (style.type === 'contour') type = 'lines';
+  else type = 'illuminated';
+  lineWidth = style.style.land.stroke.lineWidth;
+  lineColor = style.style.land.stroke.strokeStyle;
+  lineWidthMajor = 2 * style.style.land.stroke.lineWidth;
+
+  if (type == 'illuminated') highlightColor = style.style.land.stroke.strokeStyle;
+
+  if (style.style.land.fill.type == 'gradient') colorType = 'hypso';
+  else colorType = style.style.land.fill.type;
+
+  if (style.style.land.fill.fillStyle) solidColor = style.style.land.fill.fillStyle;
+  else if (style.style.land.fill.colors) hypsoColor.range(style.style.land.fill.colors);
+
+  if (style.style.water) {
+    if (style.style.water.fill.type == 'gradient') bathyColorType = 'bathy';
+    else bathyColorType = style.style.water.fill.type;
+
+    if (style.style.water.fill.fillStyle) oceanColor = style.style.water.fill.fillStyle;
+    else if (style.style.water.fill.colors) bathyColor.range(style.style.water.fill.colors);
+  } else {
+    bathyColorType = 'none';
+  }
+
+  if (style.options) {
+    if (style.options.indexInterval) indexInterval = style.options.indexInterval;
+    else indexInterval = 0;
+  }
+
+  drawContours();
+})
 
 d3.selectAll('.settings-row.type input').on('change', function () {
   type = d3.select('.settings-row.type input:checked').node().value;
@@ -520,7 +563,13 @@ function getContours () {
   
   contoursGeoData = contour(values);  // this gets the contours geojson
 
-  hypsoColor.domain([min,max]);
+  drawContours();
+}
+
+// draw the map!
+function drawContours(svg) {
+  if (bathyColorType === 'none') hypsoColor.domain([min,max]);
+  else hypsoColor.domain([0,max]);
 
   // update the index line options based on the current interval
   d3.selectAll('#major option')
@@ -528,7 +577,6 @@ function getContours () {
       if (+this.value == 0) return 'None';
       return +this.value * interval;
     });
-  majorInterval = +d3.select('#major').node().value * interval;
 
   // show bathymetry options if elevations include values below zero
   d3.select('#bathymetry').style('display', min < 0 ? 'block' : 'none');
@@ -538,12 +586,6 @@ function getContours () {
       hypsoColor.domain([0, max]);
     }
   }
-
-  drawContours();
-}
-
-// draw the map!
-function drawContours(svg) {
   // svg option is for export
   if (svg !== true) { // this is the normal canvas drawing
     contourContext.clearRect(0,0,width,height);
@@ -612,6 +654,8 @@ function drawContours(svg) {
           contourContext.stroke();
         });
       }
+
+      majorInterval = (indexInterval || +d3.select('#major').node().value) * interval;
       
       // draw thicker index lines, if desired
       if (majorInterval != 0) {

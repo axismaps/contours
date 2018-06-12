@@ -357,6 +357,14 @@
         <i class="icon-left-open"></i>
         <label><input type="checkbox" checked> Show roads and labels</input></label>
         <div class='settings-row type'>
+          <p class="settings-title inline">Preset styles</p>
+            <div class="settings-content">
+            <select id="presets">
+              <option disabled selected value="">Choose a preset style</option>
+            </select>
+          </div>
+        </div>
+        <div class='settings-row type'>
           <p class="settings-title inline">Map Type</p>
             <div class="settings-content">
             <label class="type"><input type="radio" name="type" checked value="lines"/><span>Contour lines</span></label>
@@ -450,6 +458,7 @@
     </div>
   </div>
   <div id="loading">Drawing contours...</div>
+  <script src='styles.js'></script>
   <script src='contours.js'></script>
 </body>
 </html>
