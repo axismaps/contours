@@ -36,9 +36,43 @@
     #wrapper {
       position: relative;
     }
+    canvas {
+      position: absolute; 
+      top:0; 
+      left:0;
+    }
+    #map-container, #layout-container {
+      position: relative;
+      width: calc(100% - 300px);
+      margin-left: 300px;
+      height: calc(100% - 30px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      display: none;
+    }
+    #map-container.show, #layout-container.show {
+      display: flex;
+    }
+    #layout {
+      border: 1px solid #666;
+      position: relative;
+    }
+    #layout-canvas-container {
+      border: 1px solid #999;
+      position: relative;
+      width: 90%;
+      margin-top: 5%;
+      margin-left: 5%;
+      overflow: hidden;
+    }
+    #layout-canvas-container canvas {
+      position: relative;
+    }
     #map {
       width: 100%;
       height: 100%;
+      border: 1px solid #666;
     }
     header {
       background-color: rgb(88,87,72);
@@ -51,14 +85,13 @@
       font-size: 20px;
       text-align: center;
       font-weight: bold;
-      position: fixed;
       width: 100%;
       z-index: 5000;
     }
     #panels {
       position: absolute;
       top: 30px;
-      left: -300px;
+      left: 0px;
       width: 300px;
       height: calc(100% - 30px);
       transition: left .5s;
@@ -87,7 +120,7 @@
     .toggle {
       position: absolute;
       z-index: 1001;
-      left: 0px;
+      left: 300px;
       top: 40px;
       background-color: rgb(88,87,72);
       color: white;
@@ -208,7 +241,7 @@
     #settings input#interval-input {
       width: 50px;
     }
-    canvas {position: absolute; top:0; left:0;}
+    
     .leaflet-container{ background: white;}
 
     div.disabled {
@@ -314,6 +347,23 @@
       bottom: 10px;
       z-index: 9999;
     }
+
+    #zoom-controls {
+      position: absolute;
+      top: 10px;
+      left: 70px;
+    }
+
+    #zoom-controls button {
+      display: block;
+      width: 40px;
+      height: 40px;
+      font-size: 24px;
+      line-height: 40px;
+      text-align: center;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -321,11 +371,37 @@
   <a id="axis-link" href="www.axismaps.com" target="_blank"><img src="https://www.axismaps.com/images/logo_small.png"></a>
   <div id='wrapper'>
     <header>CONTOURS</header>
-    <div id='map'></div>
+    <div id='map-container' class="show">
+      <div id="map"></div>
+      <div id="zoom-controls">
+        <button id="zoom-in"><i class="icon-plus"></i></button>
+        <button id="zoom-out"><i class="icon-minus"></i></button>
+      </div>
+    </div>
+
+    <div id='layout-container'>
+      <div id="layout">
+        <div id="layout-canvas-container"><canvas id="layout-canvas"></canvas></div>
+      </div>
+    </div>
     <div id="panels">
       
       <div id="download">
-        <i class="icon-left-open"></i>
+        <div class='settings-row aspect'>
+          <p class="settings-title inline">Dimensions</p>
+            <div class="settings-content">
+            <label class="type"><input type="radio" name="aspect" checked value="0.65"/><span>0.65:1</span></label>
+            <label class="type"><input type="radio" name="aspect" value="0.79"/><span>0.79:1</span></label>
+            <label class="type"><input type="radio" name="aspect" value="1"/><span>Square</span></label>
+          </div>
+        </div>
+        <div class='settings-row orientation'>
+          <p class="settings-title inline">Orientation</p>
+            <div class="settings-content">
+            <label class="type"><input type="radio" name="orientation" checked value="portrait"/><span>Portrait</span></label>
+            <label class="type"><input type="radio" name="orientation" value="landscape"/><span>Landscape</span></label>
+          </div>
+        </div>
         <div class="settings-content note"><br><em>Roads and labels are provided only for helping find your area of interest on this map. They will not be inlcuded in downloads.</em><br><br></div>
         <div class='settings-row geojson'>
           <p class="settings-title"><i class="icon-download"></i> GeoJSON</p>
@@ -353,15 +429,21 @@
         </div>
       </div>
 
-      <div id='settings'>
-        <i class="icon-left-open"></i>
+      <div id='settings' class='show'>
         <label><input type="checkbox" checked> Show roads and labels</input></label>
-        <div class='settings-row type'>
+        <div class='settings-row roads'>
           <p class="settings-title inline">Preset styles</p>
             <div class="settings-content">
             <select id="presets">
               <option disabled selected value="">Choose a preset style</option>
             </select>
+          </div>
+        </div>
+        <div class='settings-row shape'>
+          <p class="settings-title inline">Map shape</p>
+            <div class="settings-content">
+            <label class="type"><input type="radio" name="shape" checked value="square"/><span>Square</span></label>
+            <label class="type"><input type="radio" name="shape" value="circle"/><span>Circle</span></label>
           </div>
         </div>
         <div class='settings-row type'>
@@ -450,8 +532,8 @@
       </div>
 
     </div>
-    <div class="toggle" id="settings-toggle" title="Edit style"><i class="icon-brush"></i></div>
-    <div class="toggle" id="download-toggle" title="Download map or data"><i class="icon-download"></i></div>
+    <div class="toggle show" id="settings-toggle" title="Edit style"><i class="icon-brush"></i></div>
+    <div class="toggle" id="download-toggle" title="Download map or data"><i class="icon-doc"></i></div>
     <div id="search">
       <input type="text" placeholder="Search for places..." />
       <div id="search-results"></div>

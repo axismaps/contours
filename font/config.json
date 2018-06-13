@@ -51,6 +51,24 @@
       "src": "fontawesome"
     },
     {
+      "uid": "44e04715aecbca7f266a17d5a7863c68",
+      "css": "plus",
+      "code": 59392,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "861ab06e455e2de3232ebef67d60d708",
+      "css": "minus",
+      "code": 59401,
+      "src": "fontawesome"
+    },
+    {
+      "uid": "85ef733b1e280809e8443f5f0167b5c2",
+      "css": "doc",
+      "code": 59393,
+      "src": "typicons"
+    },
+    {
       "uid": "10c076ece5c4832eaf5f9bd96fac746f",
       "css": "select-box",
       "code": 59405,

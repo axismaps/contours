@@ -14,6 +14,12 @@ var contourContext = contourCanvas.getContext('2d');
 var demContext = demCanvas.getContext('2d');
 
 var mapNode = d3.select('#map').node();
+var containerRect = d3.select('#map-container').node().getBoundingClientRect();
+var size = Math.min(containerRect.width, containerRect.height) - 40;
+d3.select('#map')
+  .style('width', size + 'px')
+  .style('height', size + 'px');
+var mapNodeRect = d3.select('#map').node().getBoundingClientRect();
 var width = mapNode.offsetWidth + 2*buffer;
 var height = mapNode.offsetHeight + 2*buffer;
 contourCanvas.width = width;
@@ -38,12 +44,15 @@ var wait;
 
 // variables for styles etc. below
 
+var shape = 'square;'
+
 var type = 'lines';
 var unit = 'ft';
 
 var lineWidth = .75;
 var lineWidthMajor = 1.5;
 var lineColor = '#8c7556';
+var indexLineColor = '#8c7556';
 
 var highlightColor = 'rgba(177,174,164,.5)';
 var shadowColor = '#5b5143';
@@ -63,7 +72,27 @@ var bathyColor = d3.scaleLinear()
 
 var contourSVG;
 
+var aspectRatio = 0.65;
+var layoutCanvas = d3.select('#layout-canvas').node();
+var layoutContext = layoutCanvas.getContext('2d');
+layoutCanvas.width = .9 * aspectRatio * (containerRect.height - 40);
+layoutCanvas.height = .9 * aspectRatio * (containerRect.height - 40);
+d3.select('#layout')
+  .style('width', aspectRatio * (containerRect.height - 40) + 'px')
+  .style('height', (containerRect.height - 40) + 'px');
+
 window.onresize = function () {
+  containerRect = d3.select('#map-container').node().getBoundingClientRect();
+  var size = Math.min(containerRect.width, containerRect.height);
+  d3.select('#map')
+    .style('width', size + 'px')
+    .style('height', size + 'px');
+  layoutCanvas.width = .9 * aspectRatio * (containerRect.height - 40);
+  layoutCanvas.height = .9 * aspectRatio * (containerRect.height - 40);
+  d3.select('#layout')
+    .style('width', aspectRatio * (containerRect.height - 40) + 'px')
+    .style('height', (containerRect.height - 40) + 'px');
+  mapNodeRect = d3.select('#map').node().getBoundingClientRect() - 40;
   width = mapNode.offsetWidth + 2*buffer;
   height = mapNode.offsetHeight + 2*buffer;
   contourCanvas.width = width;
@@ -101,6 +130,10 @@ d3.select('#presets').on('change', function () {
   if (style.style.land.fill.fillStyle) solidColor = style.style.land.fill.fillStyle;
   else if (style.style.land.fill.colors) hypsoColor.range(style.style.land.fill.colors);
 
+  if (style.style.indexLine) {
+    indexLineColor = style.style.indexLine.stroke.strokeStyle;
+  }
+
   if (style.style.water) {
     if (style.style.water.fill.type == 'gradient') bathyColorType = 'bathy';
     else bathyColorType = style.style.water.fill.type;
@@ -117,7 +150,23 @@ d3.select('#presets').on('change', function () {
   }
 
   drawContours();
-})
+});
+
+d3.selectAll('.settings-row.shape input').on('change', function () {
+  shape = d3.select('.settings-row.shape input:checked').node().value;
+  d3.selectAll('#map, #layout-canvas-container')
+    .style('border-radius', shape == 'circle' ? '50%' : 0);
+});
+
+d3.selectAll('.settings-row.aspect input').on('change', function () {
+  aspectRatio = +d3.select('.settings-row.aspect input:checked').node().value
+  layoutCanvas.width = .9 * aspectRatio * (containerRect.height - 40);
+  layoutCanvas.height = .9 * aspectRatio * (containerRect.height - 40);
+  d3.select('#layout')
+    .style('width', aspectRatio * (containerRect.height - 40) + 'px')
+    .style('height', (containerRect.height - 40) + 'px');
+  drawLayout();
+});
 
 d3.selectAll('.settings-row.type input').on('change', function () {
   type = d3.select('.settings-row.type input:checked').node().value;
@@ -160,6 +209,7 @@ d3.select('#line-width').on('keyup', function () {
 
 d3.select('#line-color').on('change', function () {
   lineColor = d3.event.detail;
+  indexLineColor = d3.event.detail;
   clearTimeout(wait);
   wait = setTimeout(function () { load(drawContours) },500);
 });
@@ -185,21 +235,25 @@ d3.select('#shadow-width').on('keyup', function () {
 });
 
 d3.select('#settings-toggle').on('click', function () {
+  if (d3.select('#settings').classed('show')) return;
   d3.select('#settings').classed('show', !d3.select('#settings').classed('show'));
+  d3.select('#map-container').classed('show', true);
+  d3.select('#layout-container').classed('show', false);
   d3.select(this).classed('show', !d3.select(this).classed('show'));
   if (d3.select('#settings').classed('show')) {
     d3.selectAll('#download, #download-toggle').classed('show', false);
   }
-  d3.select('#wrapper').classed('panel-open', d3.select('#settings').classed('show') || d3.select('#download').classed('show'));
 });
 
 d3.select('#download-toggle').on('click', function () {
+  if (d3.select('#download').classed('show')) return;
   d3.select('#download').classed('show', !d3.select('#download').classed('show'));
+  d3.select('#map-container').classed('show', false);
+  d3.select('#layout-container').classed('show', true);
   d3.select(this).classed('show', !d3.select(this).classed('show'));
   if (d3.select('#download').classed('show')) {
     d3.selectAll('#settings, #settings-toggle').classed('show', false);
   }
-  d3.select('#wrapper').classed('panel-open', d3.select('#settings').classed('show') || d3.select('#download').classed('show'));
 });
 
 d3.selectAll('input[name="bg"]').on('change', function () {
@@ -451,9 +505,17 @@ The good stuff starts from here
 
 L.mapbox.accessToken = 'pk.eyJ1IjoiYXdvb2RydWZmIiwiYSI6IktndnRPLU0ifQ.OMo9_1sJGjpSUNiJPBGA9A';
 
-var map = L.mapbox.map('map',null,{scrollWheelZoom: false});
+var map = L.mapbox.map('map',null,{scrollWheelZoom: false, zoomControl: false, attributionControl: false});
 var hash = new L.Hash(map);
 map.setView(map_start_location.slice(0, 3), map_start_location[2]);
+
+d3.select('#zoom-in').on('click', function () {
+  map.setZoom(Math.min(15, map.getZoom() + 1));
+});
+
+d3.select('#zoom-out').on('click', function () {
+  map.setZoom(Math.max(1, map.getZoom() - 1));
+});
 
 map.on('moveend', function() {
   // on move end we redraw the contour layer, so clear some stuff
@@ -495,7 +557,7 @@ pane.appendChild(contourCanvas);
 // custom map pane for the labels
 var labelPane = map.createPane('labels');
 var referenceLayer = L.mapbox.styleLayer('mapbox://styles/awoodruff/cjggk1nwn000f2rjsi5x4iha1', {
-  minZoom: 0,
+  minZoom: 1,
   maxZoom: 15,
   pane: 'labels',
 }).addTo(map);
@@ -525,7 +587,7 @@ function getRelief(){
     // reset DEM data by drawing elevation tiles to it
     for (var t in demLayer._tiles) {
       var rect = demLayer._tiles[t].el.getBoundingClientRect();
-      demContext.drawImage(demLayer._tiles[t].el.img,rect.left + buffer,rect.top + buffer);
+      demContext.drawImage(demLayer._tiles[t].el.img,rect.left + buffer - mapNodeRect.left, rect.top + buffer - mapNodeRect.top);
     }
     demImageData = demContext.getImageData(0,0,width,height);
     demData = demImageData.data;
@@ -660,6 +722,7 @@ function drawContours(svg) {
       // draw thicker index lines, if desired
       if (majorInterval != 0) {
         contourContext.lineWidth = lineWidthMajor;
+        contourContext.strokeStyle = indexLineColor;
         contourContext.beginPath();
         contoursGeoData.forEach(function (c) {
           if (c.value % majorInterval == 0) path(c);
@@ -669,6 +732,8 @@ function drawContours(svg) {
 
     }
     contourContext.restore();
+
+    drawLayout();
   } else {
     // draw contours to SVG for export
     if (!contourSVG) {
@@ -704,6 +769,12 @@ function drawContours(svg) {
       });
   }
   d3.select('#loading').style('display', 'none');
+}
+
+function drawLayout () {
+  var scale = layoutCanvas.width / (width - 2*buffer);
+  layoutContext.clearRect(0,0,layoutCanvas.width, layoutCanvas.height);
+  layoutContext.drawImage(contourCanvas, 5, 5, width - 2*buffer, height - 2*buffer, 0, 0, layoutCanvas.width, layoutCanvas.height);
 }
 
 function downloadGeoJson () {

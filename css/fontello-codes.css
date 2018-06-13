@@ -1,5 +1,10 @@
 
+.icon-plus:before { content: '\e800'; } /* '' */
+.icon-doc:before { content: '\e801'; } /* '' */
 .icon-palette:before { content: '\e806'; } /* '' */
+.icon-minus:before { content: '\e809'; } /* '' */
+.icon-left-open:before { content: '\e80a'; } /* '' */
 .icon-download:before { content: '\e80c'; } /* '' */
 .icon-cancel:before { content: '\e812'; } /* '' */
 .icon-spinner:before { content: '\f110'; } /* '' */
+.icon-brush:before { content: '\f1fc'; } /* '' */
