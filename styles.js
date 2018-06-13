@@ -377,6 +377,81 @@ var styles = {
     }
   },
 
+  woodgrain: {
+    type: 'contour',
+    name: 'Woodgrain',
+    style: {
+      land: {
+        stroke: {
+          strokeStyle: '#4e3920',
+          lineWidth: defaultLineWidth,
+        },
+        fill: {
+          type: 'gradient',
+          colors: ['#7c5528', '#ac7e47']
+        }
+      }
+    },
+    options: {
+      indexInterval: 5
+    }
+  },
+
+  oilSlick: {
+    type: 'contour',
+    name: 'Oil Slick',
+    style: {
+      land: {
+        stroke: {
+          strokeStyle: 'rgba(0,0,0,0)',
+          lineWidth: defaultLineWidth,
+        },
+        fill: {
+          type: 'gradient',
+          colors: ['#DD8C2F', '#D714BD']
+        }
+      },
+      water: {
+        stroke: {
+          strokeStyle: 'rgba(0,0,0,0)',
+          lineWidth: defaultLineWidth,
+        },        
+        fill: {
+          type: 'gradient',
+          colors: ['#12B4D5', '#ECEC19']
+        }
+      }
+    },
+    options: {
+      zeroContour: 0
+    }
+  },
+
+  sandstone: {
+    type: 'contour',
+    name: 'Sandstone',
+    style: {
+      land: {
+        stroke: {
+          strokeStyle: '#994d14',
+          lineWidth: defaultLineWidth,
+        },  
+        fill: {
+          type: 'gradient',
+          colors: ['#B15926', '#D7C3AB']
+        }
+      },
+      indexLine: {
+        stroke: {
+          strokeStyle: '#7a441b'
+        }
+      }
+    },
+    options: {
+      indexInterval: 5
+    }
+  },
+
   arctic: {
     type: 'illuminated',
     name: 'Arctic',
