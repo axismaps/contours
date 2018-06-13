@@ -83,7 +83,7 @@ d3.select('#layout')
 
 window.onresize = function () {
   containerRect = d3.select('#map-container').node().getBoundingClientRect();
-  var size = Math.min(containerRect.width, containerRect.height);
+  size = Math.min(containerRect.width, containerRect.height);
   d3.select('#map')
     .style('width', size + 'px')
     .style('height', size + 'px');
@@ -92,7 +92,7 @@ window.onresize = function () {
   d3.select('#layout')
     .style('width', aspectRatio * (containerRect.height - 40) + 'px')
     .style('height', (containerRect.height - 40) + 'px');
-  mapNodeRect = d3.select('#map').node().getBoundingClientRect() - 40;
+  mapNodeRect = d3.select('#map').node().getBoundingClientRect();
   width = mapNode.offsetWidth + 2*buffer;
   height = mapNode.offsetHeight + 2*buffer;
   contourCanvas.width = width;
@@ -100,6 +100,7 @@ window.onresize = function () {
   demCanvas.width = width;
   demCanvas.height = height;
   contour.size([width, height]);
+  map.invalidateSize();
   clearTimeout(wait);
   wait = setTimeout(getRelief,500);
 }
@@ -545,6 +546,7 @@ var CanvasLayer = L.GridLayer.extend({
         wait = setTimeout(getRelief,500); // only draw after a reasonable delay, so that we don't redraw on every single tile load
       }
       img.src = 'https://elevation-tiles-prod.s3.amazonaws.com/terrarium/'+coords.z+'/'+coords.x+'/'+coords.y+'.png'
+      //tile.appendChild(img);
       return tile;
   }
 });
