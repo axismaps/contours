@@ -83,7 +83,7 @@ d3.select('#layout')
 
 window.onresize = function () {
   containerRect = d3.select('#map-container').node().getBoundingClientRect();
-  size = Math.min(containerRect.width, containerRect.height);
+  size = Math.min(containerRect.width, containerRect.height) - 40;
   d3.select('#map')
     .style('width', size + 'px')
     .style('height', size + 'px');
@@ -133,6 +133,8 @@ d3.select('#presets').on('change', function () {
 
   if (style.style.indexLine) {
     indexLineColor = style.style.indexLine.stroke.strokeStyle;
+  } else {
+    indexLineColor = lineColor;
   }
 
   if (style.style.water) {
