@@ -1,3 +1,5 @@
+var downloadScale = 1;
+
 // canvas on which the contours will be drawn
 var contourCanvas = document.createElement('canvas');
 contourCanvas.id='contours';
@@ -804,9 +806,10 @@ function downloadGeoJson () {
 
 function downloadPNG () {
   var newCanvas = document.createElement('canvas');
-  newCanvas.width = width - 2*buffer;
-  newCanvas.height = height - 2*buffer;
-  newCanvas.getContext('2d').putImageData(contourContext.getImageData(0,0,width,height), -buffer, -buffer)
+  newCanvas.width = downloadScale * (width - 2*buffer);
+  newCanvas.height = downloadScale * (height - 2*buffer);
+  //(contourContext.getImageData(0,0,width,height), -buffer, -buffer)
+  newCanvas.getContext('2d').drawImage(contourCanvas, buffer, buffer, width - 2*buffer, height - 2*buffer, 0, 0, newCanvas.width, newCanvas.height)
   // https://stackoverflow.com/questions/12796513/html5-canvas-to-png-file
   var dt = newCanvas.toDataURL('image/png');
   /* Change MIME type to trick the browser to downlaod the file instead of displaying it */
@@ -827,6 +830,37 @@ function downloadPNG () {
   tempLink.click();
   document.body.removeChild(tempLink);
 }
+
+/* For later - works better for large images?
+// https://stackoverflow.com/questions/36918075/is-it-possible-to-programmatically-detect-size-limit-for-data-url
+
+if (!HTMLCanvasElement.prototype.toBlob) {
+ Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+  value: function (callback, type, quality) {
+
+    var binStr = atob( this.toDataURL(type, quality).split(',')[1] ),
+        len = binStr.length,
+        arr = new Uint8Array(len);
+
+    for (var i=0; i<len; i++ ) {
+     arr[i] = binStr.charCodeAt(i);
+    }
+
+    callback( new Blob( [arr], {type: type || 'image/png'} ) );
+  }
+ });
+}
+
+var makeButtonUsingBlob = function (canvas, a) {
+  canvas.toBlob(function(blob) {
+    a.href = window.URL.createObjectURL(blob);
+    a.download = "example.jpg";
+    var linkText = document.createTextNode(canvas.width + "px");
+    a.appendChild(linkText);
+  }, "image/jpeg", 0.7);
+};
+
+*/
 
 function downloadSVG () {
   drawContours(true);
