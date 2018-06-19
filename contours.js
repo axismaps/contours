@@ -29,7 +29,8 @@ contourCanvas.height = height;
 demCanvas.width = width;
 demCanvas.height = height;
 
-var path = d3.geoPath().context(contourContext);
+var projection = d3.geoIdentity();
+var path = d3.geoPath().context(contourContext).projection(projection);
 var svgPath = d3.geoPath();
 
 var min;
@@ -81,7 +82,8 @@ layoutCanvas.width = .9 * aspectRatio * (containerRect.height - 40);
 layoutCanvas.height = .9 * aspectRatio * (containerRect.height - 40);
 d3.select('#layout')
   .style('width', aspectRatio * (containerRect.height - 40) + 'px')
-  .style('height', (containerRect.height - 40) + 'px');
+  .style('height', (containerRect.height - 40) + 'px')
+  .attr('class', 'aspect-' + aspectRatio);
 
 window.onresize = function () {
   containerRect = d3.select('#map-container').node().getBoundingClientRect();
@@ -164,12 +166,13 @@ d3.selectAll('.settings-row.shape input').on('change', function () {
 });
 
 d3.selectAll('.settings-row.aspect input').on('change', function () {
-  aspectRatio = +d3.select('.settings-row.aspect input:checked').node().value
+  aspectRatio = +d3.select('.settings-row.aspect input:checked').node().value;
   layoutCanvas.width = .9 * aspectRatio * (containerRect.height - 40);
   layoutCanvas.height = .9 * aspectRatio * (containerRect.height - 40);
   d3.select('#layout')
     .style('width', aspectRatio * (containerRect.height - 40) + 'px')
-    .style('height', (containerRect.height - 40) + 'px');
+    .style('height', (containerRect.height - 40) + 'px')
+    .attr('class', 'aspect-' + aspectRatio);
   drawLayout();
 });
 
@@ -179,6 +182,14 @@ d3.selectAll('.settings-row.type input').on('change', function () {
   d3.select('#lines-style').style('display', type =='illuminated' ? 'none' : 'block');
   d3.select('#illuminated-style').style('display', type =='illuminated' ? 'block' : 'none');
   load(drawContours);
+});
+
+d3.select('#title').on('keyup', function () {
+  d3.select('#layout-title').html(this.value).style('display', this.value ? 'block' : 'none');
+});
+
+d3.select('#subtitle').on('keyup', function () {
+  d3.select('#layout-subtitle').html(this.value).style('display', this.value ? 'block' : 'none');;
 });
 
 d3.select('#interval-input').on('keyup', function () {
@@ -778,9 +789,97 @@ function drawContours(svg) {
 }
 
 function drawLayout () {
-  var scale = layoutCanvas.width / (width - 2*buffer);
+  var scale = (layoutCanvas.width + 2) / (width - 2*buffer);
   layoutContext.clearRect(0,0,layoutCanvas.width, layoutCanvas.height);
   layoutContext.drawImage(contourCanvas, 5, 5, width - 2*buffer, height - 2*buffer, 0, 0, layoutCanvas.width, layoutCanvas.height);
+}
+
+function drawContoursScaled (canvas) {
+  var ctx = canvas.getContext('2d');
+  projection.scale(downloadScale);
+  path.context(ctx);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if (type == 'illuminated') {
+    ctx.lineWidth = downloadScale * (shadowSize + 1);
+    ctx.shadowBlur = downloadScale * shadowSize;
+    ctx.shadowOffsetX = downloadScale * shadowSize;
+    ctx.shadowOffsetY = downloadScale * shadowSize;
+
+    contoursGeoData.forEach(function (c) {
+      contourContext.beginPath();
+      if (c.value >= 0 || bathyColorType == 'none') { // for values above sea level (or if we aren't styling bahymetry)
+        ctx.shadowColor = shadowColor;
+        ctx.strokeStyle = highlightColor;
+        if (colorType == 'hypso') ctx.fillStyle = hypsoColor(c.value);
+        else if (colorType == 'solid') ctx.fillStyle = solidColor;
+        else ctx.fillStyle = '#fff'; // fill can't really be transparent in this style, so "none" is actually white
+      } else {
+        // blue-ish shadow and highlight colors below sea level
+        // no user option for these colors because I'm lazy
+        ctx.shadowColor = '#4e5c66';
+        ctx.strokeStyle = 'rgba(224, 242, 255, .5)';
+        if (bathyColorType == 'bathy') ctx.fillStyle = bathyColor(c.value);
+        else if (bathyColorType == 'solid') ctx.fillStyle = oceanColor;
+        else ctx.fillStyle = '#fff';
+      }
+      path(c);  // draws the shape
+      // draw the light stroke first, then the fill with drop shadow
+      // the effect is a light edge on side and dark on the other, giving the raised/illuminated contour appearance
+      ctx.stroke(); 
+      ctx.fill();
+    });
+  } else {  // regular contour lines
+    ctx.lineWidth = downloadScale * lineWidth;
+    ctx.strokeStyle = lineColor;
+    if (colorType != 'hypso' && bathyColorType == 'none') {
+      // no fill or solid fill. we don't have to fill/stroke individual contours, but rather can do them all at once
+      ctx.beginPath();
+      contoursGeoData.forEach(function (c) {
+        if (majorInterval == 0 || c.value % majorInterval != 0) path(c);
+      });
+      if (colorType == 'solid') {
+        ctx.fillStyle = solidColor;
+        ctx.fill();
+      }
+      ctx.stroke();
+    } else {
+      // for hypsometric tints or a separate bathymetric fill, we have to fill contours one at a time
+      contoursGeoData.forEach(function (c) {
+        ctx.beginPath();
+        var fill;
+        if (c.value >= 0 || bathyColorType == 'none') {
+          if (colorType == 'hypso') fill = hypsoColor(c.value);
+          else if (colorType == 'solid') fill = solidColor;
+          else if (bathyColorType != 'none') fill = '#fff'; // to mask out ocean if ocean is colored
+        } else {
+          if (bathyColorType == 'bathy') fill = bathyColor(c.value);
+          else if (bathyColorType == 'solid') fill = oceanColor;
+        }
+        path(c);
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        ctx.stroke();
+      });
+    }
+
+    majorInterval = (indexInterval || +d3.select('#major').node().value) * interval;
+    
+    // draw thicker index lines, if desired
+    if (majorInterval != 0) {
+      ctx.lineWidth = downloadScale * lineWidthMajor;
+      ctx.strokeStyle = indexLineColor;
+      ctx.beginPath();
+      contoursGeoData.forEach(function (c) {
+        if (c.value % majorInterval == 0) path(c);
+      });
+      ctx.stroke();
+    }
+
+  }
+  projection.scale(1);
+  path.context(contourContext);
 }
 
 function downloadGeoJson () {
@@ -805,11 +904,15 @@ function downloadGeoJson () {
 }
 
 function downloadPNG () {
+  var bigCanvas = document.createElement('canvas');
+  bigCanvas.width = downloadScale * width;
+  bigCanvas.height = downloadScale * height;
+  drawContoursScaled(bigCanvas);
   var newCanvas = document.createElement('canvas');
   newCanvas.width = downloadScale * (width - 2*buffer);
   newCanvas.height = downloadScale * (height - 2*buffer);
-  //(contourContext.getImageData(0,0,width,height), -buffer, -buffer)
-  newCanvas.getContext('2d').drawImage(contourCanvas, buffer, buffer, width - 2*buffer, height - 2*buffer, 0, 0, newCanvas.width, newCanvas.height)
+  //()
+  newCanvas.getContext('2d').putImageData(bigCanvas.getContext('2d').getImageData(0,0,bigCanvas.width,bigCanvas.height), -buffer * downloadScale, -buffer * downloadScale)
   // https://stackoverflow.com/questions/12796513/html5-canvas-to-png-file
   var dt = newCanvas.toDataURL('image/png');
   /* Change MIME type to trick the browser to downlaod the file instead of displaying it */

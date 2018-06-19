@@ -57,15 +57,39 @@
     #layout {
       border: 1px solid #666;
       position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
     }
     #layout-canvas-container {
       border: 1px solid #999;
       position: relative;
       width: 90%;
-      margin-top: 5%;
-      margin-left: 5%;
       overflow: hidden;
     }
+
+    #layout-title {
+      margin: 5% 0 0 0;
+      font-size: 18px;
+      line-height: 24px;
+      max-width: 90%;
+      display: none;
+    }
+
+    #layout-subtitle {
+      margin: 5% 0;
+      font-size: 14px;
+      line-height: 18px;
+      color: #666;
+      max-width: 90%;
+      display: none;
+    }
+
+    #layout.aspect-1 #layout-title, #layout.aspect-1 #layout-subtitle {
+      display: none !important;
+    }
+
     #layout-canvas-container canvas {
       position: relative;
     }
@@ -382,6 +406,8 @@
     <div id='layout-container'>
       <div id="layout">
         <div id="layout-canvas-container"><canvas id="layout-canvas"></canvas></div>
+        <div id="layout-title"></div>
+        <div id="layout-subtitle"></div>
       </div>
     </div>
     <div id="panels">
@@ -401,6 +427,12 @@
             <label class="type"><input type="radio" name="orientation" checked value="portrait"/><span>Portrait</span></label>
             <label class="type"><input type="radio" name="orientation" value="landscape"/><span>Landscape</span></label>
           </div>
+        </div>
+        <div class='settings-row titles'>
+          <p class="settings-title inline">Title</p>
+          <input type="text" id="title">
+          <p class="settings-title inline">Subtitle</p>
+          <textarea id="subtitle"></textarea>
         </div>
         <div class="settings-content note"><br><em>Roads and labels are provided only for helping find your area of interest on this map. They will not be inlcuded in downloads.</em><br><br></div>
         <div class='settings-row geojson'>
