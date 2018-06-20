@@ -15,12 +15,42 @@ var demData;
 var contourContext = contourCanvas.getContext('2d');
 var demContext = demCanvas.getContext('2d');
 
+var orientation = 'portrait';
+var aspectRatio = 0.65;
+var shape = 'square;'
+
 var mapNode = d3.select('#map').node();
 var containerRect = d3.select('#map-container').node().getBoundingClientRect();
-var size = Math.min(containerRect.width, containerRect.height) - 40;
+var pageWidth;
+var pageHeight;
+var mapWidth;
+var mapHeight;
+if (aspectRatio == 1) {
+  pageWidth = Math.min(containerRect.width, containerRect.height) - 40;
+  pageHeight = pageWidth;
+} else if (orientation == 'portrait') {
+  pageHeight = containerRect.height - 40;
+  pageWidth = aspectRatio * pageHeight;
+} else {
+  pageWidth = containerRect.width - 40;
+  pageHeight = aspectRatio * pageWidth;
+}
+if (shape != 'full') {
+  mapWidth = .9 * Math.min(pageWidth, pageHeight);
+  mapHeight = mapWidth;
+} else if (orientation == 'portrait'){
+  mapHeight = .9 * pageHeight;
+  mapWidth = pageWidth - (pageHeight - mapHeight);
+} else {
+  mapWidth = .9 * pageWidth;
+  mapHeight = pageHeight - (pageWidth - mapWidth);
+}
+d3.select('#page')
+  .style('width', pageWidth + 'px')
+  .style('height', pageHeight + 'px');
 d3.select('#map')
-  .style('width', size + 'px')
-  .style('height', size + 'px');
+  .style('width', mapWidth + 'px')
+  .style('height', mapHeight + 'px');
 var mapNodeRect = d3.select('#map').node().getBoundingClientRect();
 var width = mapNode.offsetWidth + 2*buffer;
 var height = mapNode.offsetHeight + 2*buffer;
@@ -46,8 +76,6 @@ var contoursGeoData;
 var wait;
 
 // variables for styles etc. below
-
-var shape = 'square;'
 
 var type = 'lines';
 var unit = 'ft';
@@ -75,24 +103,37 @@ var bathyColor = d3.scaleLinear()
 
 var contourSVG;
 
-var aspectRatio = 0.65;
-var layoutCanvas = d3.select('#layout-canvas').node();
-var layoutContext = layoutCanvas.getContext('2d');
-layoutCanvas.width = .9 * aspectRatio * (containerRect.height - 40);
-layoutCanvas.height = .9 * aspectRatio * (containerRect.height - 40);
-d3.select('#layout')
-  .style('width', aspectRatio * (containerRect.height - 40) + 'px')
-  .style('height', (containerRect.height - 40) + 'px')
-  .attr('class', 'aspect-' + aspectRatio);
+d3.select('#page')
+  .attr('class', 'aspect-' + aspectRatio + ' shape-' + shape + ' ' + orientation);
 
 window.onresize = function () {
   containerRect = d3.select('#map-container').node().getBoundingClientRect();
-  size = Math.min(containerRect.width, containerRect.height) - 40;
+  if (aspectRatio == 1) {
+    pageWidth = Math.min(containerRect.width, containerRect.height) - 40;
+    pageHeight = pageWidth;
+  } else if (orientation == 'portrait') {
+    pageHeight = containerRect.height - 40;
+    pageWidth = aspectRatio * pageHeight;
+  } else {
+    pageWidth = containerRect.width - 40;
+    pageHeight = aspectRatio * pageWidth;
+  }
+  if (shape != 'full') {
+    mapWidth = .9 * Math.min(pageWidth, pageHeight);
+    mapHeight = mapWidth;
+  } else if (orientation == 'portrait'){
+    mapHeight = .9 * pageHeight;
+    mapWidth = pageWidth - (pageHeight - mapHeight);
+  } else {
+    mapWidth = .9 * pageWidth;
+    mapHeight = pageHeight - (pageWidth - mapWidth);
+  }
+  d3.select('#page')
+    .style('width', pageWidth + 'px')
+    .style('height', pageHeight + 'px');
   d3.select('#map')
-    .style('width', size + 'px')
-    .style('height', size + 'px');
-  layoutCanvas.width = .9 * aspectRatio * (containerRect.height - 40);
-  layoutCanvas.height = .9 * aspectRatio * (containerRect.height - 40);
+    .style('width', mapWidth + 'px')
+    .style('height', mapHeight + 'px');
   d3.select('#layout')
     .style('width', aspectRatio * (containerRect.height - 40) + 'px')
     .style('height', (containerRect.height - 40) + 'px');
@@ -163,17 +204,23 @@ d3.selectAll('.settings-row.shape input').on('change', function () {
   shape = d3.select('.settings-row.shape input:checked').node().value;
   d3.selectAll('#map, #layout-canvas-container')
     .style('border-radius', shape == 'circle' ? '50%' : 0);
+  d3.select('#page')
+    .attr('class', 'aspect-' + aspectRatio + ' shape-' + shape + ' ' + orientation);
+  window.onresize();
 });
 
 d3.selectAll('.settings-row.aspect input').on('change', function () {
   aspectRatio = +d3.select('.settings-row.aspect input:checked').node().value;
-  layoutCanvas.width = .9 * aspectRatio * (containerRect.height - 40);
-  layoutCanvas.height = .9 * aspectRatio * (containerRect.height - 40);
-  d3.select('#layout')
-    .style('width', aspectRatio * (containerRect.height - 40) + 'px')
-    .style('height', (containerRect.height - 40) + 'px')
-    .attr('class', 'aspect-' + aspectRatio);
-  drawLayout();
+  d3.select('#page')
+    .attr('class', 'aspect-' + aspectRatio + ' shape-' + shape + ' ' + orientation);
+  window.onresize();
+});
+
+d3.selectAll('.settings-row.orientation input').on('change', function () {
+  orientation = d3.select('.settings-row.orientation input:checked').node().value;
+  d3.select('#page')
+    .attr('class', 'aspect-' + aspectRatio + ' shape-' + shape + ' ' + orientation);
+  window.onresize();
 });
 
 d3.selectAll('.settings-row.type input').on('change', function () {
@@ -253,8 +300,6 @@ d3.select('#shadow-width').on('keyup', function () {
 d3.select('#settings-toggle').on('click', function () {
   if (d3.select('#settings').classed('show')) return;
   d3.select('#settings').classed('show', !d3.select('#settings').classed('show'));
-  d3.select('#map-container').classed('show', true);
-  d3.select('#layout-container').classed('show', false);
   d3.select(this).classed('show', !d3.select(this).classed('show'));
   if (d3.select('#settings').classed('show')) {
     d3.selectAll('#download, #download-toggle').classed('show', false);
@@ -264,8 +309,6 @@ d3.select('#settings-toggle').on('click', function () {
 d3.select('#download-toggle').on('click', function () {
   if (d3.select('#download').classed('show')) return;
   d3.select('#download').classed('show', !d3.select('#download').classed('show'));
-  d3.select('#map-container').classed('show', false);
-  d3.select('#layout-container').classed('show', true);
   d3.select(this).classed('show', !d3.select(this).classed('show'));
   if (d3.select('#download').classed('show')) {
     d3.selectAll('#settings, #settings-toggle').classed('show', false);
@@ -789,6 +832,7 @@ function drawContours(svg) {
 }
 
 function drawLayout () {
+  return;
   var scale = (layoutCanvas.width + 2) / (width - 2*buffer);
   layoutContext.clearRect(0,0,layoutCanvas.width, layoutCanvas.height);
   layoutContext.drawImage(contourCanvas, 5, 5, width - 2*buffer, height - 2*buffer, 0, 0, layoutCanvas.width, layoutCanvas.height);
