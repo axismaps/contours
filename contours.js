@@ -16,7 +16,7 @@ var contourContext = contourCanvas.getContext('2d');
 var demContext = demCanvas.getContext('2d');
 
 var orientation = 'portrait';
-var aspectRatio = 0.65;
+var aspectRatio = 0.79;
 var shape = 'square;'
 
 var mapNode = d3.select('#map').node();
@@ -462,7 +462,7 @@ d3.select('input[type="checkbox"]').on('change', function () {
 });
 
 d3.select('#download-geojson').on('click', downloadGeoJson);
-d3.select('#download-png').on('click', downloadPNG);
+d3.select('#download-png').on('click', downloadPage);
 d3.select('#download-svg').on('click', downloadSVG);
 
 d3.selectAll('.icon-left-open').on('click', function () {
@@ -850,7 +850,7 @@ function drawContoursScaled (canvas) {
     ctx.shadowOffsetY = downloadScale * shadowSize;
 
     contoursGeoData.forEach(function (c) {
-      contourContext.beginPath();
+      ctx.beginPath();
       if (c.value >= 0 || bathyColorType == 'none') { // for values above sea level (or if we aren't styling bahymetry)
         ctx.shadowColor = shadowColor;
         ctx.strokeStyle = highlightColor;
@@ -924,6 +924,121 @@ function drawContoursScaled (canvas) {
   }
   projection.scale(1);
   path.context(contourContext);
+}
+
+function downloadPage () {
+  var smallSidePx = 5000;
+  var largeSidePx = Math.round(smallSidePx / aspectRatio);
+  var exportCanvas = document.createElement('canvas');
+  exportCanvas.width = orientation == 'portrait' ? smallSidePx : largeSidePx;
+  exportCanvas.height = orientation == 'portrait' ? largeSidePx : smallSidePx;
+  var exportCtx = exportCanvas.getContext('2d');
+  exportCtx.fillStyle = '#fff';
+  exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  downloadScale = exportCanvas.width / pageWidth;
+
+  var exportContours = document.createElement('canvas');
+  exportContours.width = Math.round(contourCanvas.width * downloadScale);
+  exportContours.height = Math.round(contourCanvas.height * downloadScale);
+  drawContoursScaled(exportContours);
+
+  var pageRect = d3.select('#page').node().getBoundingClientRect();
+  var contourRect = d3.select('#map').node().getBoundingClientRect();
+  var dx = (contourRect.left - pageRect.left) * downloadScale;
+  var dy = (contourRect.top - pageRect.top) * downloadScale;
+
+  exportCtx.drawImage(exportContours, buffer * downloadScale, buffer * downloadScale, exportContours.width - 2 * buffer * downloadScale, exportContours.height - 2 * buffer * downloadScale, dx, dy, mapWidth * downloadScale, mapHeight * downloadScale)
+
+  if (shape == 'circle') {
+    exportCtx.globalCompositeOperation = 'destination-in';
+    exportCtx.fillStyle = 'white';
+    exportCtx.beginPath();
+    var r = .5 * mapWidth * downloadScale;
+    exportCtx.arc(dx + r, dy + r, r, 2 * Math.PI, false);
+    exportCtx.fill();
+
+    exportCtx.globalCompositeOperation = 'destination-over';
+    exportCtx.fillStyle = '#fff';
+    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+    exportCtx.globalCompositeOperation = 'source-over';
+    exportCtx.strokeStyle = '#666';
+    exportCtx.lineWidth = downloadScale;
+    exportCtx.beginPath();
+    exportCtx.arc(dx + r, dy + r, r, 2 * Math.PI, false);
+    exportCtx.stroke();
+  } else {
+    exportCtx.strokeStyle = '#666';
+    exportCtx.lineWidth = downloadScale;
+    exportCtx.strokeRect(dx, dy, mapWidth * downloadScale, mapHeight * downloadScale);
+  }
+
+  if (aspectRatio !== 1 || shape !== 'full') {
+    var title = d3.select('#layout-title').html();
+    if (title) {
+      var textRect = d3.select('#layout-title').node().getBoundingClientRect();
+      dx = (textRect.right + textRect.left)/2;
+      dy = (textRect.bottom + textRect.top)/2;
+      dx -= pageRect.left;
+      dy -= pageRect.top; 
+      var fontSize = 36 * downloadScale;
+      exportCtx.font = fontSize + "px 'Noto Sans', Helvetica, Arial, sans-serif";
+      exportCtx.textAlign = 'center';
+      exportCtx.textBaseline = 'middle';
+      exportCtx.fillStyle = '#333';
+      exportCtx.fillText(title, dx * downloadScale, dy * downloadScale);
+    }
+    var subtitle = d3.select('#layout-subtitle').html();
+    if (subtitle) {
+      var textRect = d3.select('#layout-subtitle').node().getBoundingClientRect();
+      dx = (textRect.right + textRect.left)/2;
+      dy = (textRect.bottom + textRect.top)/2;
+      dx -= pageRect.left;
+      dy -= pageRect.top; 
+      var fontSize = 24 * downloadScale;
+      exportCtx.font = fontSize + "px 'Noto Sans', Helvetica, Arial, sans-serif";
+      exportCtx.textAlign = 'center';
+      exportCtx.textBaseline = 'middle';
+      exportCtx.fillStyle = '#666';
+      exportCtx.fillText(subtitle, dx * downloadScale, dy * downloadScale);
+    }
+  }
+
+  if (!HTMLCanvasElement.prototype.toBlob) {
+   Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+    value: function (callback, type, quality) {
+
+      var binStr = atob( this.toDataURL(type, quality).split(',')[1] ),
+          len = binStr.length,
+          arr = new Uint8Array(len);
+
+      for (var i=0; i<len; i++ ) {
+       arr[i] = binStr.charCodeAt(i);
+      }
+
+      callback( new Blob( [arr], {type: type || 'image/png'} ) );
+    }
+   });
+  }
+
+  exportCanvas.toBlob(function(blob) {
+    var tempLink = document.createElement('a');
+    tempLink.style.display = 'none';
+    var url = window.URL.createObjectURL(blob);
+    tempLink.href = url;
+    tempLink.setAttribute('download', 'contours.png');
+    if (typeof tempLink.download === 'undefined') {
+        tempLink.setAttribute('target', '_blank');
+    }
+    
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
+    setTimeout(function () {
+      window.URL.revokeObjectURL(url);
+    }, 500);
+  }, "image/png");
 }
 
 function downloadGeoJson () {
