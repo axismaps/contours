@@ -12,6 +12,11 @@ var demContext;
 var demImageData;
 var demData;
 
+var coastCanvas = document.createElement('canvas');
+coastCanvas.style.display = 'none';
+coastCanvas.id='coast';
+var coastContext = coastCanvas.getContext('2d');
+
 var contourContext = contourCanvas.getContext('2d');
 var demContext = demCanvas.getContext('2d');
 
@@ -58,6 +63,8 @@ contourCanvas.width = width;
 contourCanvas.height = height;
 demCanvas.width = width;
 demCanvas.height = height;
+coastCanvas.width = width;
+coastCanvas.height = height;
 
 var projection = d3.geoIdentity();
 var path = d3.geoPath().context(contourContext).projection(projection);
@@ -144,6 +151,8 @@ window.onresize = function () {
   contourCanvas.height = height;
   demCanvas.width = width;
   demCanvas.height = height;
+  coastCanvas.width = width;
+  coastCanvas.height = height;
   contour.size([width, height]);
   map.invalidateSize();
   clearTimeout(wait);
@@ -584,10 +593,24 @@ map.on('moveend', function() {
   wait = setTimeout(getRelief,500);  // redraw after a delay in case map is moved again soon after
 });
 
+map.on('zoom', function () {
+  coastLayer.clearLayers();
+})
+
 map.on('move', function() {
   // stop things so it doesn't redraw in the middle of panning
   clearTimeout(wait);
 });
+
+function projectPoint(x, y) {
+  var point = map.latLngToContainerPoint(new L.LatLng(y, x));
+  this.stream.point(point.x, point.y);
+}
+
+var transform = d3.geoTransform({ point: projectPoint });
+var coastPath = d3.geoPath().projection(transform).context(coastContext);
+
+var coastLayer = L.geoJSON().addTo(map);
 
 // custom tile layer for the Mapzen elevation tiles
 // it returns div tiles but doesn't display anyting; images are saved but only drawn to an invisible canvas (demCanvas)
@@ -610,9 +633,46 @@ var CanvasLayer = L.GridLayer.extend({
 });
 var demLayer = new CanvasLayer({attribution: '<a href="https://aws.amazon.com/public-datasets/terrain/">Elevation tiles</a> by Mapzen'}).addTo(map);
 
+var landTiles = {};
+// https://tile.nextzen.org/tilezen/vector/v1/all/{z}/{x}/{y}.mvt?api_key=your-nextzen-api-key
+var VTLayer = L.GridLayer.extend({
+  createTile: function(coords){
+    var tile = L.DomUtil.create('div', 'leaflet-tile');
+    if (landTiles[coords.z] && landTiles[coords.z][coords.x] && landTiles[coords.z][coords.x][coords.y]) return tile;
+    d3.json('https://tile.nextzen.org/tilezen/vector/v1/all/' + coords.z + '/' + coords.x + '/' + coords.y + '.topojson?api_key=9HipcCI6T82EWM92otvFcw', function (data) {
+       // if (data.objects.earth) {
+       //  data.objects.earth.geometries.forEach(function (g) {
+       //    if (g.properties.kind === 'earth' ) landFeatures.push(g);
+       //  });
+       // }
+      // clearTimeout(wait);
+      // wait = setTimeout(getRelief,500);
+       var features = topojson.feature(data, data.objects.earth);
+       if (!features || !features.features) return;
+       if (features.features.length) {
+        if (!landTiles[coords.z]) landTiles[coords.z] = {};
+        if (!landTiles[coords.z][coords.x]) landTiles[coords.z][coords.x] = {};
+        landTiles[coords.z][coords.x][coords.y] = [];
+       }
+       features.features.forEach(function (f) {
+        if (f.properties.kind === 'earth') {
+          landTiles[coords.z][coords.x][coords.y] = landTiles[coords.z][coords.x][coords.y].concat(turf.flatten(f).features);
+          clearTimeout(wait);
+          wait = setTimeout(getRelief,500);
+        }
+       });
+      });
+      return tile;
+  }
+});
+
+var vectorLayer = new VTLayer().addTo(map);
+
+
 // custom map pane for the contours, above other layers
 var pane = map.createPane('contour');
 pane.appendChild(contourCanvas);
+pane.appendChild(coastCanvas);
 
 // custom map pane for the labels
 var labelPane = map.createPane('labels');
@@ -627,6 +687,7 @@ reverseTransform();
 function reverseTransform() {
   var top_left = map.containerPointToLayerPoint([-buffer, -buffer]);
   L.DomUtil.setPosition(contourCanvas, top_left);
+  L.DomUtil.setPosition(coastCanvas, top_left);
 };
 
 // this is to ensure the "loading" message gets a chance to show. show it then do the function (usually getRelief or drawContours) on next frame
@@ -640,12 +701,32 @@ function load (fn) {
 // after terrain tiles are loaded, kick things off by drawing them to a canvas
 function getRelief(){
   load(function() {
+    //var obj = {type: 'GeometryCollection', geometries: landFeatures};
     // reset canvases
+    coastLayer.clearLayers();
+    var coords;
+    var fc = {type: 'FeatureCollection', features: []};
+    for (var t in demLayer._tiles) {
+      coords = demLayer._tiles[t].coords;
+      if (landTiles[coords.z] && landTiles[coords.z][coords.x] && landTiles[coords.z][coords.x][coords.y]) {
+        fc.features = fc.features.concat(landTiles[coords.z][coords.x][coords.y]);
+      }
+    }
+    //var dissolved = turf.dissolve(fc);
+   // console.log(turf.union.apply(this, fc.features))
+    //coastLayer.addData(fc);
+
     demContext.clearRect(0,0,width,height);
+    coastContext.clearRect(0,0,width,height);
     reverseTransform();
 
+    coastContext.fillStyle = 'red';
+    coastContext.beginPath();
+    coastPath(fc);
+    coastContext.fill();
+
     // reset DEM data by drawing elevation tiles to it
-    for (var t in demLayer._tiles) {
+    for (t in demLayer._tiles) {
       var rect = demLayer._tiles[t].el.getBoundingClientRect();
       demContext.drawImage(demLayer._tiles[t].el.img,rect.left + buffer - mapNodeRect.left, rect.top + buffer - mapNodeRect.top);
     }
@@ -659,12 +740,17 @@ function getRelief(){
 // calculate contours
 function getContours () {
   var values = new Array(width*height);
+  var coastValues = new Array(width*height);
+  var coastImageData = coastContext.getImageData(0,0,width,height);
+  var coastData = coastImageData.data;
   // get elevation values for pixels
   for (var y=0; y < height; y++) {
     for (var x=0; x < width; x++) {
       var i = getIndexForCoordinates(width, x,y);
       // x + y*width is the array position expected by the contours generator
       values[x + y*width] = Math.round(elev(i, demData) * (unit == 'ft' ? 3.28084 : 1));
+      if (coastData[i] === 255) coastValues[x + y*width] = 100;
+      else coastValues[x + y*width] = -100;
     }
   }
 
@@ -684,6 +770,20 @@ function getContours () {
   contour.thresholds(thresholds);
   
   contoursGeoData = contour(values);  // this gets the contours geojson
+
+  if (min < 0) {
+    var zeroContour;
+    for (var c = 0; c < contoursGeoData.length; c ++) {
+      if (contoursGeoData[c].value == 0) zeroContour = contoursGeoData[c];
+    }
+    if (zeroContour) {
+      var newZeroContour = contour.contour(coastValues, 0);
+      contoursGeoData.splice(contoursGeoData.indexOf(zeroContour), 1, newZeroContour);
+    }
+  }
+  
+
+  console.log();
 
   drawContours();
 }
