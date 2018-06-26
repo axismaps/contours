@@ -787,8 +787,16 @@ function getContours () {
     }
   }
 
+  var belowZero = values.filter(function (v) {
+    return v < 0;
+  });
+  var aboveZero = values.filter(function (v) {
+    return v >= 0;
+  });
+
   max = d3.max(values);
-  min = d3.min(values);
+  if (belowZero.length < 100) min = d3.min(aboveZero);  // if there are very few values below zero, they're probably junk data. use only values >= 0
+  else min = d3.min(values);
 
   interval = +d3.select('#interval-input').node().value;
 
@@ -803,6 +811,15 @@ function getContours () {
   contour.thresholds(thresholds);
   
   contoursGeoData = contour(values);  // this gets the contours geojson
+
+  contoursGeoData.forEach(function (c) {
+    var polys = c.coordinates.concat();
+    c.coordinates = polys.map(function (p) {
+      return p.filter(function (ring) {
+        return path.area({type:'Polygon', coordinates: [ring]}) > 2;
+      });
+    })
+  });
 
   if (min < 0) {
     var zeroContour;
