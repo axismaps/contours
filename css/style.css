@@ -31,6 +31,7 @@ canvas {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 #layout {
@@ -65,6 +66,13 @@ canvas {
   color: #666;
   max-width: 90%;
   display: none;
+}
+
+.map-label {
+  position: absolute;
+  font-size: 20px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .aspect-1 .layout-text, .shape-full .layout-text, .landscape .layout-text {
@@ -269,7 +277,7 @@ input[type="radio"][name="unit"] + span{
   width: 80px;
 }
 
-#settings .titles input[type="text"] {
+#settings .titles input[type="text"], #settings .label input[type="text"]#label {
   width: 200px;
 }
 

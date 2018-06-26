@@ -248,6 +248,35 @@ d3.select('#subtitle').on('keyup', function () {
   d3.select('#layout-subtitle').html(this.value).style('display', this.value ? 'block' : 'none');;
 });
 
+d3.select('#label').on('keyup', function () {
+  d3.select('.map-label').html(this.value).style('display', this.value ? 'block' : 'none');
+});
+
+d3.select('#label-color').on('change', function () {
+  d3.selectAll('.map-label').style('color', d3.event.detail);
+});
+
+d3.select('.map-label')
+  .style('color', '#000')
+  .style('top', pageHeight/2 + 'px')
+  .style('left', pageWidth/2 + 'px')
+  .on('mousedown', function () {
+    var x0 = d3.event.pageX;
+    var y0 = d3.event.pageY;
+    var l0 = +d3.select(this).style('left').replace(/[a-z]/g, '');
+    var t0 = +d3.select(this).style('top').replace(/[a-z]/g, '');
+    d3.select('body')
+      .on('mousemove.label', function () {
+        d3.select('.map-label')
+          .style('top', (t0 + d3.event.pageY - y0) + 'px')
+          .style('left', (l0 + d3.event.pageX - x0) + 'px');
+      })
+      .on('mouseup.label mouseleave.label', function () {
+        d3.select('body')
+          .on('mousemove.label mouseup.label mouseleave.label', null);
+      })
+  });
+
 d3.select('#interval-input').on('keyup', function () {
   if (+this.value == interval) return;
   clearTimeout(wait);
@@ -457,13 +486,17 @@ d3.selectAll('.color-input').on('change', function () {
     case 'bathy-high-color-text':
     bathyColor.range([bathyColor.range()[0], this.value]);
     break;
+
+    case 'label-color-text':
+    d3.selectAll('.map-label').style('color', this.value);
+    break;
   }
 
   d3.select('#' + this.id.replace('-text','')).node().picker.fromString(toHex(this.value));
 
   clearTimeout(wait);
   wait = setTimeout(function () { load(drawContours) },500);
-})
+});
 
 d3.select('input[type="checkbox"]').on('change', function () {
   if (this.checked) referenceLayer.setOpacity(1);
@@ -940,6 +973,7 @@ function drawLayout () {
 
 function drawContoursScaled (canvas) {
   var ctx = canvas.getContext('2d');
+  ctx.lineJoin = 'round';
   projection.scale(downloadScale);
   path.context(ctx);
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -973,23 +1007,34 @@ function drawContoursScaled (canvas) {
       ctx.fill();
     });
   } else {  // regular contour lines
-    ctx.lineWidth = downloadScale * lineWidth;
-    ctx.strokeStyle = lineColor;
+    var strokeCanvas = document.createElement('canvas');
+    strokeCanvas.width = canvas.width;
+    strokeCanvas.height = canvas.height;
+    var strokeCtx = strokeCanvas.getContext('2d');
+    strokeCtx.lineWidth = downloadScale * lineWidth;
+    strokeCtx.strokeStyle = lineColor;
+    strokeCtx.lineJoin = 'round';
+    var strokePath = d3.geoPath().context(strokeCtx).projection(projection);
     if (colorType != 'hypso' && bathyColorType == 'none') {
       // no fill or solid fill. we don't have to fill/stroke individual contours, but rather can do them all at once
       ctx.beginPath();
+      strokeCtx.beginPath();
       contoursGeoData.forEach(function (c) {
-        if (majorInterval == 0 || c.value % majorInterval != 0) path(c);
+        if (majorInterval == 0 || c.value % majorInterval != 0) {
+          path(c);
+          strokePath(c);
+        }
       });
       if (colorType == 'solid') {
         ctx.fillStyle = solidColor;
         ctx.fill();
       }
-      ctx.stroke();
+      strokeCtx.stroke();
     } else {
       // for hypsometric tints or a separate bathymetric fill, we have to fill contours one at a time
       contoursGeoData.forEach(function (c) {
         ctx.beginPath();
+        strokeCtx.beginPath();
         var fill;
         if (c.value >= 0 || bathyColorType == 'none') {
           if (colorType == 'hypso') fill = hypsoColor(c.value);
@@ -1000,11 +1045,12 @@ function drawContoursScaled (canvas) {
           else if (bathyColorType == 'solid') fill = oceanColor;
         }
         path(c);
+        strokePath(c);
         if (fill) {
           ctx.fillStyle = fill;
           ctx.fill();
         }
-        ctx.stroke();
+        strokeCtx.stroke();
       });
     }
 
@@ -1012,16 +1058,37 @@ function drawContoursScaled (canvas) {
     
     // draw thicker index lines, if desired
     if (majorInterval != 0) {
-      ctx.lineWidth = downloadScale * lineWidthMajor;
-      ctx.strokeStyle = indexLineColor;
-      ctx.beginPath();
+      strokeCtx.lineWidth = downloadScale * lineWidthMajor;
+      strokeCtx.strokeStyle = indexLineColor;
+      strokeCtx.beginPath();
       contoursGeoData.forEach(function (c) {
-        if (c.value % majorInterval == 0) path(c);
+        if (c.value % majorInterval == 0) strokePath(c);
       });
-      ctx.stroke();
+      strokeCtx.stroke();
     }
 
+    var mapLabel = d3.select('.map-label');
+    if (mapLabel.html()) {
+      var contourRect = d3.select('#map').node().getBoundingClientRect();
+      var textRect = mapLabel.node().getBoundingClientRect();
+      dx = (textRect.right + textRect.left)/2 + buffer;
+      dy = (textRect.bottom + textRect.top)/2 + buffer;
+      dx -= contourRect.left;
+      dy -= contourRect.top; 
+      var fontSize = 20 * downloadScale;
+      strokeCtx.font = fontSize + "px 'Noto Sans', Helvetica, Arial, sans-serif";
+      strokeCtx.textAlign = 'center';
+      strokeCtx.textBaseline = 'middle';
+      strokeCtx.fillStyle = mapLabel.style('color');
+      strokeCtx.lineWidth = 5 * downloadScale;
+      strokeCtx.globalCompositeOperation = 'destination-out';
+      strokeCtx.fillText(mapLabel.html(), dx * downloadScale, dy * downloadScale);
+      strokeCtx.strokeText(mapLabel.html(), dx * downloadScale, dy * downloadScale);
+      strokeCtx.globalCompositeOperation = 'source-over';
+      strokeCtx.fillText(mapLabel.html(), dx * downloadScale, dy * downloadScale);
+    }
   }
+  ctx.drawImage(strokeCanvas, 0, 0)
   projection.scale(1);
   path.context(contourContext);
 }
