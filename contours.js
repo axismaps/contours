@@ -1104,8 +1104,8 @@ function drawContoursScaled (canvas) {
       strokeCtx.globalCompositeOperation = 'source-over';
       strokeCtx.fillText(mapLabel.html(), dx * downloadScale, dy * downloadScale);
     }
+    ctx.drawImage(strokeCanvas, 0, 0)
   }
-  ctx.drawImage(strokeCanvas, 0, 0)
   projection.scale(1);
   path.context(contourContext);
 }
