@@ -637,7 +637,7 @@ map.on('move', function() {
 
 function projectPoint(x, y) {
   var point = map.latLngToContainerPoint(new L.LatLng(y, x));
-  this.stream.point(point.x, point.y);
+  this.stream.point(point.x + buffer, point.y + buffer);
 }
 
 var transform = d3.geoTransform({ point: projectPoint });
@@ -831,10 +831,6 @@ function getContours () {
       contoursGeoData.splice(contoursGeoData.indexOf(zeroContour), 1, newZeroContour);
     }
   }
-  
-
-  console.log();
-
   drawContours();
 }
 
