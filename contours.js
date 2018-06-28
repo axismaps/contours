@@ -894,7 +894,7 @@ function drawContours(svg) {
         // no fill or solid fill. we don't have to fill/stroke individual contours, but rather can do them all at once
         contourContext.beginPath();
         contoursGeoData.forEach(function (c) {
-          if (majorInterval == 0 || c.value % majorInterval != 0) path(c);
+          path(c);
         });
         if (colorType == 'solid') {
           contourContext.fillStyle = solidColor;
