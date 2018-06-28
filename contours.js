@@ -1053,10 +1053,8 @@ function drawContoursScaled (canvas) {
       ctx.beginPath();
       strokeCtx.beginPath();
       contoursGeoData.forEach(function (c) {
-        if (majorInterval == 0 || c.value % majorInterval != 0) {
-          path(c);
-          strokePath(c);
-        }
+        path(c);
+        if (majorInterval == 0 || c.value % majorInterval != 0) strokePath(c);
       });
       if (colorType == 'solid') {
         ctx.fillStyle = solidColor;
