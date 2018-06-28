@@ -252,9 +252,21 @@ d3.select('#label').on('keyup', function () {
   d3.select('.map-label').html(this.value).style('display', this.value ? 'block' : 'none');
 });
 
+d3.select('#title-color').on('change', function () {
+  d3.select('#layout-title').style('color', d3.event.detail);
+});
+
+d3.select('#subtitle-color').on('change', function () {
+  d3.select('#layout-subtitle').style('color', d3.event.detail);
+});
+
 d3.select('#label-color').on('change', function () {
   d3.selectAll('.map-label').style('color', d3.event.detail);
 });
+
+d3.select('#layout-title').style('color', '#333');
+d3.select('#layout-subtitle').style('color', '#666');
+
 
 d3.select('.map-label')
   .style('color', '#000')
@@ -489,6 +501,14 @@ d3.selectAll('.color-input').on('change', function () {
 
     case 'label-color-text':
     d3.selectAll('.map-label').style('color', this.value);
+    break;
+
+    case 'title-color-text':
+    d3.select('#layout-title').style('color', this.value);
+    break;
+
+    case 'subtitle-color-text':
+    d3.select('#layout-subtitle').style('color', this.value);
     break;
   }
 
@@ -1166,7 +1186,7 @@ function downloadPage () {
       exportCtx.font = fontSize + "px 'Noto Sans', Helvetica, Arial, sans-serif";
       exportCtx.textAlign = 'center';
       exportCtx.textBaseline = 'middle';
-      exportCtx.fillStyle = '#333';
+      exportCtx.fillStyle = d3.select('#layout-title').style('color');
       exportCtx.fillText(title, dx * downloadScale, dy * downloadScale);
     }
     var subtitle = d3.select('#layout-subtitle').html();
@@ -1180,7 +1200,7 @@ function downloadPage () {
       exportCtx.font = fontSize + "px 'Noto Sans', Helvetica, Arial, sans-serif";
       exportCtx.textAlign = 'center';
       exportCtx.textBaseline = 'middle';
-      exportCtx.fillStyle = '#666';
+      exportCtx.fillStyle = d3.select('#layout-subtitle').style('color');
       exportCtx.fillText(subtitle, dx * downloadScale, dy * downloadScale);
     }
   }

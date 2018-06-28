@@ -273,12 +273,12 @@ input[type="radio"][name="unit"] + span{
   border: 1px solid #ccc;
 }
 
-#settings input[type="text"].color-input {
-  width: 80px;
-}
-
 #settings .titles input[type="text"], #settings .label input[type="text"]#label {
   width: 200px;
+}
+
+#settings input[type="text"].color-input {
+  width: 80px !important;
 }
 
 #settings .titles textarea {
