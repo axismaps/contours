@@ -37,8 +37,13 @@ if (aspectRatio == 1) {
   pageHeight = containerRect.height - 40;
   pageWidth = aspectRatio * pageHeight;
 } else {
-  pageWidth = containerRect.width - 40;
-  pageHeight = aspectRatio * pageWidth;
+  if (containerRect.width < containerRect.height / aspectRatio) {
+    pageWidth = containerRect.width - 40;
+    pageHeight = aspectRatio * pageWidth;
+  } else {
+    pageHeight = containerRect.height - 40;
+    pageWidth = pageHeight / aspectRatio;
+  }
 }
 if (shape != 'full') {
   mapWidth = .9 * Math.min(pageWidth, pageHeight);
@@ -122,8 +127,13 @@ window.onresize = function () {
     pageHeight = containerRect.height - 40;
     pageWidth = aspectRatio * pageHeight;
   } else {
-    pageWidth = containerRect.width - 40;
-    pageHeight = aspectRatio * pageWidth;
+    if (containerRect.width < containerRect.height / aspectRatio) {
+      pageWidth = containerRect.width - 40;
+      pageHeight = aspectRatio * pageWidth;
+    } else {
+      pageHeight = containerRect.height - 40;
+      pageWidth = pageHeight / aspectRatio;
+    }
   }
   if (shape != 'full') {
     mapWidth = .9 * Math.min(pageWidth, pageHeight);
