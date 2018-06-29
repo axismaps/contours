@@ -452,6 +452,106 @@ var styles = {
     }
   },
 
+  highway: {
+    type: 'contour',
+    name: 'Highway',
+    style: {
+      land: {
+        stroke: {
+          strokeStyle: '#ffc132',
+          lineWidth: defaultLineWidth,
+        },  
+        fill: {
+          type: 'solid',
+          fillStyle: '#323232'
+        }
+      },
+      indexLine: {
+        stroke: {
+          strokeStyle: '#ffffff'
+        }
+      }
+    },
+    options: {
+      indexInterval: 5
+    }
+  },
+
+  legalpad: {
+    type: 'contour',
+    name: 'Legal Pad',
+    style: {
+      land: {
+        stroke: {
+          strokeStyle: '#42a1a8',
+          lineWidth: defaultLineWidth,
+        },  
+        fill: {
+          type: 'solid',
+          fillStyle: '#ffffaf'
+        }
+      },
+      indexLine: {
+        stroke: {
+          strokeStyle: '#d36262'
+        }
+      }
+    },
+    options: {
+      indexInterval: 5
+    }
+  },
+
+  farmfieldlight: {
+    type: 'contour',
+    name: 'Farm Field (light)',
+    style: {
+      land: {
+        stroke: {
+          strokeStyle: '#6d5130',
+          lineWidth: defaultLineWidth,
+        },  
+        fill: {
+          type: 'solid',
+          fillStyle: '#80aa37'
+        }
+      },
+      indexLine: {
+        stroke: {
+          strokeStyle: '#f4db60'
+        }
+      }
+    },
+    options: {
+      indexInterval: 5
+    }
+  },
+
+  farmfielddark: {
+    type: 'contour',
+    name: 'Farm Field (dark)',
+    style: {
+      land: {
+        stroke: {
+          strokeStyle: '#56a842',
+          lineWidth: defaultLineWidth,
+        },  
+        fill: {
+          type: 'solid',
+          fillStyle: '#6d5130'
+        }
+      },
+      indexLine: {
+        stroke: {
+          strokeStyle: '#b8c443'
+        }
+      }
+    },
+    options: {
+      indexInterval: 5
+    }
+  },
+
   arctic: {
     type: 'illuminated',
     name: 'Arctic',
