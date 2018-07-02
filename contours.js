@@ -1133,8 +1133,8 @@ function drawContoursScaled (canvas) {
       dy = (textRect.bottom + textRect.top)/2 + buffer;
       dx -= contourRect.left;
       dy -= contourRect.top; 
-      var fontSize = 20 * downloadScale;
-      strokeCtx.font = fontSize + "px 'Noto Sans', Helvetica, Arial, sans-serif";
+      var fontSize = 18 * downloadScale;
+      strokeCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
       strokeCtx.textAlign = 'center';
       strokeCtx.textBaseline = 'middle';
       strokeCtx.fillStyle = mapLabel.style('color');
@@ -1208,7 +1208,7 @@ function downloadPage () {
       dx -= pageRect.left;
       dy -= pageRect.top; 
       var fontSize = 36 * downloadScale;
-      exportCtx.font = fontSize + "px 'Noto Sans', Helvetica, Arial, sans-serif";
+      exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
       exportCtx.textAlign = 'center';
       exportCtx.textBaseline = 'middle';
       exportCtx.fillStyle = d3.select('#layout-title').style('color');
@@ -1221,8 +1221,8 @@ function downloadPage () {
       dy = (textRect.bottom + textRect.top)/2;
       dx -= pageRect.left;
       dy -= pageRect.top; 
-      var fontSize = 24 * downloadScale;
-      exportCtx.font = fontSize + "px 'Noto Sans', Helvetica, Arial, sans-serif";
+      var fontSize = 18 * downloadScale;
+      exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
       exportCtx.textAlign = 'center';
       exportCtx.textBaseline = 'middle';
       exportCtx.fillStyle = d3.select('#layout-subtitle').style('color');
