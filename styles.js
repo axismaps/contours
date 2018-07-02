@@ -643,3 +643,58 @@ var styles = {
     }
   }
 }
+
+var fonts = [
+  {
+    name: 'Nimbus Sans',
+    className: 'tk-nimbus-sans',
+    type: 'sans serif'
+  },
+  {
+    name: 'Futura PT',
+    className: 'tk-futura-pt',
+    type: 'sans serif'
+  },
+  {
+    name: 'Meta',
+    className: 'tk-ff-meta-web-pro',
+    type: 'sans serif'
+  },
+  {
+    name: 'Aller',
+    className: 'tk-aller',
+    type: 'sans serif'
+  },
+  {
+    name: 'Eurostile',
+    className: 'tk-eurostile',
+    type: 'sans serif'
+  },
+  {
+    name: 'Copperplate',
+    className: 'tk-copperplate',
+    type: 'serif',
+    smallcaps: true
+  },
+  {
+    name: 'Trajan',
+    className: 'tk-trajan-pro-3',
+    type: 'serif',
+    smallcaps: true
+  },
+  {
+    name: 'Clarendon URW',
+    className: 'tk-clarendon-urw',
+    type: 'serif'
+  },
+  {
+    name: 'Bodoni URW',
+    className: 'tk-bodoni-urw',
+    type: 'serif'
+  },
+  {
+    name: 'Adobe Caslon Pro',
+    className: 'tk-adobe-caslon-pro',
+    type: 'serif'
+  }
+]

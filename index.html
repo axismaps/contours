@@ -2,6 +2,7 @@
 <head>
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-54392712-6"></script>
+  <link rel="stylesheet" href="https://use.typekit.net/aqt5tes.css">
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -83,7 +84,7 @@
 
       <div id='settings' class='show'>
         <label><input type="checkbox" checked> Show roads and labels</input></label>
-        <div class='settings-row roads'>
+        <div class='settings-row styles'>
           <p class="settings-title inline">Preset styles</p>
             <div class="settings-content">
             <select id="presets">
@@ -131,12 +132,19 @@
           </div>
         </div>
         <div class='settings-row label'>
-          <p class="settings-title inline">Place label</p>
+          <p class="settings-title inline">Map label</p>
           <div class="settings-content">
             <input type="text" id="label">
           </div>
           <div class="settings-content">
             <div class="settings-section"><button id="label-color"  type="color" value ="#000000"></button><span>Label color</span><label><input class="color-input" id="label-color-text" type="text" value ="#000000"/></label></div>
+          </div>
+        </div>
+        <div class='settings-row font'>
+          <p class="settings-title inline">Font</p>
+            <div class="settings-content">
+            <select id="fonts">
+            </select>
           </div>
         </div>
         <div class='settings-row type'>

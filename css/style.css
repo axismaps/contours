@@ -73,6 +73,7 @@ canvas {
   font-size: 20px;
   cursor: pointer;
   user-select: none;
+  z-index: 2000;
 }
 
 .aspect-1 .layout-text, .shape-full .layout-text, .landscape .layout-text {

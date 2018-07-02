@@ -299,6 +299,23 @@ d3.select('.map-label')
       })
   });
 
+d3.select('#fonts').selectAll('option.font')
+  .data(fonts)
+  .enter()
+  .append('option')
+  .attr('class', 'font')
+  .attr('value', function (d){ return d.className })
+  .attr('selected', function (d, i) { return i == 0 ? true : null })
+  .html(function (d){ return d.name });
+
+d3.select('#page').classed(d3.select('#fonts').node().value, true);
+
+d3.select('#fonts').on('change', function () {
+  var c = d3.select('#page').attr('class');
+  d3.select('#page').attr('class', c.replace(/tk\S+/, ''))
+    .classed(this.value, true);
+});
+
 d3.select('#interval-input').on('keyup', function () {
   if (+this.value == interval) return;
   clearTimeout(wait);
@@ -812,7 +829,7 @@ function getContours () {
       var i = getIndexForCoordinates(width, x,y);
       // x + y*width is the array position expected by the contours generator
       values[x + y*width] = Math.round(elev(i, demData) * (unit == 'ft' ? 3.28084 : 1));
-      if (coastData[i] === 255) coastValues[x + y*width] = 100;
+      if (coastData[i] === 255 && values[x + y*width] > -10) coastValues[x + y*width] = 100;
       else coastValues[x + y*width] = -100;
     }
   }
