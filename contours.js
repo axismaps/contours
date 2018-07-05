@@ -24,6 +24,11 @@ var orientation = 'portrait';
 var aspectRatio = 0.79;
 var shape = 'square;'
 
+var baseTitleSize = 36;
+var baseLabelSize = 18;
+var titleSize = baseTitleSize;
+var labelSize = baseLabelSize;
+
 var mapNode = d3.select('#map').node();
 var containerRect = d3.select('#map-container').node().getBoundingClientRect();
 var pageWidth;
@@ -70,6 +75,7 @@ demCanvas.width = width;
 demCanvas.height = height;
 coastCanvas.width = width;
 coastCanvas.height = height;
+updateTextSizes();
 
 var projection = d3.geoIdentity();
 var path = d3.geoPath().context(contourContext).projection(projection);
@@ -118,6 +124,13 @@ var contourSVG;
 d3.select('#page')
   .attr('class', 'aspect-' + aspectRatio + ' shape-' + shape + ' ' + orientation);
 
+function updateTextSizes () {
+  titleSize = baseTitleSize * pageWidth / 710;
+  labelSize = baseLabelSize * pageWidth / 710;
+  d3.select('#layout-title').style('font-size', Math.round(titleSize) + 'px');
+  d3.selectAll('#layout-subtitle, .map-label').style('font-size', Math.round(labelSize) + 'px');
+}
+
 window.onresize = function () {
   containerRect = d3.select('#map-container').node().getBoundingClientRect();
   if (aspectRatio == 1) {
@@ -164,6 +177,7 @@ window.onresize = function () {
   coastCanvas.width = width;
   coastCanvas.height = height;
   contour.size([width, height]);
+  updateTextSizes();
   map.invalidateSize();
   clearTimeout(wait);
   wait = setTimeout(getRelief,500);
@@ -1133,7 +1147,7 @@ function drawContoursScaled (canvas) {
       dy = (textRect.bottom + textRect.top)/2 + buffer;
       dx -= contourRect.left;
       dy -= contourRect.top; 
-      var fontSize = 18 * downloadScale;
+      var fontSize = labelSize * downloadScale;
       strokeCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
       strokeCtx.textAlign = 'center';
       strokeCtx.textBaseline = 'middle';
@@ -1207,7 +1221,7 @@ function downloadPage () {
       dy = (textRect.bottom + textRect.top)/2;
       dx -= pageRect.left;
       dy -= pageRect.top; 
-      var fontSize = 36 * downloadScale;
+      var fontSize = titleSize * downloadScale;
       exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
       exportCtx.textAlign = 'center';
       exportCtx.textBaseline = 'middle';
@@ -1221,7 +1235,7 @@ function downloadPage () {
       dy = (textRect.bottom + textRect.top)/2;
       dx -= pageRect.left;
       dy -= pageRect.top; 
-      var fontSize = 18 * downloadScale;
+      var fontSize = labelSize * downloadScale;
       exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
       exportCtx.textAlign = 'center';
       exportCtx.textBaseline = 'middle';
