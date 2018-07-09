@@ -25,13 +25,37 @@ canvas {
   justify-content: center;
 }
 
-#page {
-  box-shadow: 0 0 5px rgba(0,0,0,.75);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+#guides {
+  position: absolute;
+}
+
+.guide {
+  display: none;
+}
+
+.guide > div {
+  position: absolute;
+  border: 2px dashed black;
+  top: 50%;
+  left: 50%;
+  z-index: 2000;
+  box-sizing: border-box;
+}
+
+.guide > div:before {
+  content: " ";
+  position: absolute;
+  z-index: -1;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border: 2px dashed white;
+}
+
+
+.guide[data-aspect="1"] > div.portrait, .guide[data-aspect="1"] > div.portrait:before {
+  border-radius: 50%;
 }
 
 #layout {

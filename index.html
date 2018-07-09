@@ -40,11 +40,9 @@
   <div id='wrapper'>
     <header>CONTOURS</header>
     <div id='map-container' class="show">
-      <div id="page">
-        <div id="map"></div>
-        <div class="layout-text" id="layout-title"></div>
-        <div class="layout-text" id="layout-subtitle"></div>
-        <div class="map-label"></div>
+      <div id="map"></div>
+      <div class="map-label"></div>
+      <div id="guides">
       </div>
       <div id="zoom-controls">
         <button id="zoom-in"><i class="icon-plus"></i></button>
@@ -93,26 +91,11 @@
           </div>
         </div>
         <div class='settings-row aspect'>
-          <p class="settings-title inline">Page dimensions</p>
+          <p class="settings-title inline">Print guides</p>
             <div class="settings-content">
-            <label class="type"><input type="radio" name="aspect" value="0.65"/><span>0.65:1</span></label>
-            <label class="type"><input type="radio" name="aspect" checked value="0.79"/><span>0.79:1</span></label>
-            <label class="type"><input type="radio" name="aspect" value="1"/><span>Square</span></label>
-          </div>
-        </div>
-        <div class='settings-row orientation'>
-          <p class="settings-title inline">Page orientation</p>
-            <div class="settings-content">
-            <label class="type"><input type="radio" name="orientation" checked value="portrait"/><span>Portrait</span></label>
-            <label class="type"><input type="radio" name="orientation" value="landscape"/><span>Landscape</span></label>
-          </div>
-        </div>
-        <div class='settings-row shape'>
-          <p class="settings-title inline">Map shape</p>
-            <div class="settings-content">
-            <label class="type"><input type="radio" name="shape" checked value="square"/><span>Square</span></label>
-            <label class="type"><input type="radio" name="shape" value="circle"/><span>Circle</span></label>
-            <label class="type"><input type="radio" name="shape" value="full"/><span>Full page</span></label>
+            <label class="type"><input type="checkbox" name="aspect" value="0.625"/><span>11 x 17 inches</span></label>
+            <label class="type"><input type="checkbox" name="aspect" value="0.74"/><span>18 x 24 inches</span></label>
+            <label class="type"><input type="checkbox" name="aspect" value="1"/><span>Square/circle</span></label>
           </div>
         </div>
         <div class='settings-row titles'>

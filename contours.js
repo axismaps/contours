@@ -29,43 +29,14 @@ var baseLabelSize = 18;
 var titleSize = baseTitleSize;
 var labelSize = baseLabelSize;
 
+var aspectRatios = [.625, .74, 1];
+
 var mapNode = d3.select('#map').node();
 var containerRect = d3.select('#map-container').node().getBoundingClientRect();
 var pageWidth;
 var pageHeight;
 var mapWidth;
 var mapHeight;
-if (aspectRatio == 1) {
-  pageWidth = Math.min(containerRect.width, containerRect.height) - 40;
-  pageHeight = pageWidth;
-} else if (orientation == 'portrait') {
-  pageHeight = containerRect.height - 40;
-  pageWidth = aspectRatio * pageHeight;
-} else {
-  if (containerRect.width < containerRect.height / aspectRatio) {
-    pageWidth = containerRect.width - 40;
-    pageHeight = aspectRatio * pageWidth;
-  } else {
-    pageHeight = containerRect.height - 40;
-    pageWidth = pageHeight / aspectRatio;
-  }
-}
-if (shape != 'full') {
-  mapWidth = .9 * Math.min(pageWidth, pageHeight);
-  mapHeight = mapWidth;
-} else if (orientation == 'portrait'){
-  mapHeight = .9 * pageHeight;
-  mapWidth = pageWidth - (pageHeight - mapHeight);
-} else {
-  mapWidth = .9 * pageWidth;
-  mapHeight = pageHeight - (pageWidth - mapWidth);
-}
-d3.select('#page')
-  .style('width', pageWidth + 'px')
-  .style('height', pageHeight + 'px');
-d3.select('#map')
-  .style('width', mapWidth + 'px')
-  .style('height', mapHeight + 'px');
 var mapNodeRect = d3.select('#map').node().getBoundingClientRect();
 var width = mapNode.offsetWidth + 2*buffer;
 var height = mapNode.offsetHeight + 2*buffer;
@@ -76,6 +47,22 @@ demCanvas.height = height;
 coastCanvas.width = width;
 coastCanvas.height = height;
 updateTextSizes();
+
+var guides = d3.select('#guides').selectAll('div.guide')
+  .data(aspectRatios)
+  .enter()
+  .append('div')
+  .attr('class', 'guide')
+  .attr('data-aspect', function (d) { return d });
+
+guides.append('div')
+  .attr('class', 'landscape');
+
+guides.append('div')
+  .attr('class', 'portrait');
+
+updateGuides();
+
 
 var projection = d3.geoIdentity();
 var path = d3.geoPath().context(contourContext).projection(projection);
@@ -121,8 +108,6 @@ var bathyColor = d3.scaleLinear()
 
 var contourSVG;
 
-d3.select('#page')
-  .attr('class', 'aspect-' + aspectRatio + ' shape-' + shape + ' ' + orientation);
 
 function updateTextSizes () {
   titleSize = baseTitleSize * pageWidth / 710;
@@ -131,42 +116,32 @@ function updateTextSizes () {
   d3.selectAll('#layout-subtitle, .map-label').style('font-size', Math.round(labelSize) + 'px');
 }
 
+function updateGuides () {
+  d3.selectAll('.guide .landscape')
+    .each(function (d) {
+      var w = mapNodeRect.height < mapNodeRect.width * d ?
+        (mapNodeRect.height - 20) / d : mapNodeRect.width - 20;
+      var h = w * d;
+      d3.select(this)
+        .style('width', w + 'px')
+        .style('height', h + 'px')
+        .style('margin-left', -w/2 + 'px')
+        .style('margin-top', -h/2 + 'px')
+    });
+  d3.selectAll('.guide .portrait')
+    .each(function (d) {
+      var h = mapNodeRect.width < mapNodeRect.height * d ? 
+        (mapNodeRect.width - 20) / d : mapNodeRect.height - 20;
+      var w = h * d;
+      d3.select(this)
+        .style('width', w + 'px')
+        .style('height', h + 'px')
+        .style('margin-left', -w/2 + 'px')
+        .style('margin-top', -h/2 + 'px')
+    });
+}
+
 window.onresize = function () {
-  containerRect = d3.select('#map-container').node().getBoundingClientRect();
-  if (aspectRatio == 1) {
-    pageWidth = Math.min(containerRect.width, containerRect.height) - 40;
-    pageHeight = pageWidth;
-  } else if (orientation == 'portrait') {
-    pageHeight = containerRect.height - 40;
-    pageWidth = aspectRatio * pageHeight;
-  } else {
-    if (containerRect.width < containerRect.height / aspectRatio) {
-      pageWidth = containerRect.width - 40;
-      pageHeight = aspectRatio * pageWidth;
-    } else {
-      pageHeight = containerRect.height - 40;
-      pageWidth = pageHeight / aspectRatio;
-    }
-  }
-  if (shape != 'full') {
-    mapWidth = .9 * Math.min(pageWidth, pageHeight);
-    mapHeight = mapWidth;
-  } else if (orientation == 'portrait'){
-    mapHeight = .9 * pageHeight;
-    mapWidth = pageWidth - (pageHeight - mapHeight);
-  } else {
-    mapWidth = .9 * pageWidth;
-    mapHeight = pageHeight - (pageWidth - mapWidth);
-  }
-  d3.select('#page')
-    .style('width', pageWidth + 'px')
-    .style('height', pageHeight + 'px');
-  d3.select('#map')
-    .style('width', mapWidth + 'px')
-    .style('height', mapHeight + 'px');
-  d3.select('#layout')
-    .style('width', aspectRatio * (containerRect.height - 40) + 'px')
-    .style('height', (containerRect.height - 40) + 'px');
   mapNodeRect = d3.select('#map').node().getBoundingClientRect();
   width = mapNode.offsetWidth + 2*buffer;
   height = mapNode.offsetHeight + 2*buffer;
@@ -178,6 +153,7 @@ window.onresize = function () {
   coastCanvas.height = height;
   contour.size([width, height]);
   updateTextSizes();
+  updateGuides();
   map.invalidateSize();
   clearTimeout(wait);
   wait = setTimeout(getRelief,500);
@@ -243,10 +219,7 @@ d3.selectAll('.settings-row.shape input').on('change', function () {
 });
 
 d3.selectAll('.settings-row.aspect input').on('change', function () {
-  aspectRatio = +d3.select('.settings-row.aspect input:checked').node().value;
-  d3.select('#page')
-    .attr('class', 'aspect-' + aspectRatio + ' shape-' + shape + ' ' + orientation);
-  window.onresize();
+  d3.select('.guide[data-aspect="' + this.value + '"]').style('display', this.checked ? 'block' : 'none');
 });
 
 d3.selectAll('.settings-row.orientation input').on('change', function () {
@@ -322,11 +295,11 @@ d3.select('#fonts').selectAll('option.font')
   .attr('selected', function (d, i) { return i == 0 ? true : null })
   .html(function (d){ return d.name });
 
-d3.select('#page').classed(d3.select('#fonts').node().value, true);
+d3.select('#map-container').classed(d3.select('#fonts').node().value, true);
 
 d3.select('#fonts').on('change', function () {
-  var c = d3.select('#page').attr('class');
-  d3.select('#page').attr('class', c.replace(/tk\S+/, ''))
+  var c = d3.select('#map-container').attr('class');
+  d3.select('#map-container').attr('class', c.replace(/tk\S+/, ''))
     .classed(this.value, true);
 });
 
@@ -1167,82 +1140,74 @@ function drawContoursScaled (canvas) {
 
 function downloadPage () {
   var smallSidePx = 5000;
-  var largeSidePx = Math.round(smallSidePx / aspectRatio);
+  var minSide = Math.min((mapNodeRect.width - 20) * d3.min(aspectRatios), (mapNodeRect.height - 20) * d3.min(aspectRatios));
+  downloadScale = 5000 / minSide;
   var exportCanvas = document.createElement('canvas');
-  exportCanvas.width = orientation == 'portrait' ? smallSidePx : largeSidePx;
-  exportCanvas.height = orientation == 'portrait' ? largeSidePx : smallSidePx;
+  exportCanvas.width = mapNodeRect.width * downloadScale;
+  exportCanvas.height = mapNodeRect.height * downloadScale;
   var exportCtx = exportCanvas.getContext('2d');
-  exportCtx.fillStyle = '#fff';
-  exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-
-  downloadScale = exportCanvas.width / pageWidth;
 
   var exportContours = document.createElement('canvas');
   exportContours.width = Math.round(contourCanvas.width * downloadScale);
   exportContours.height = Math.round(contourCanvas.height * downloadScale);
   drawContoursScaled(exportContours);
 
-  var pageRect = d3.select('#page').node().getBoundingClientRect();
-  var contourRect = d3.select('#map').node().getBoundingClientRect();
-  var dx = (contourRect.left - pageRect.left) * downloadScale;
-  var dy = (contourRect.top - pageRect.top) * downloadScale;
+  exportCtx.drawImage(exportContours, -buffer * downloadScale, -buffer * downloadScale)
 
-  exportCtx.drawImage(exportContours, buffer * downloadScale, buffer * downloadScale, exportContours.width - 2 * buffer * downloadScale, exportContours.height - 2 * buffer * downloadScale, dx, dy, mapWidth * downloadScale, mapHeight * downloadScale)
+  // if (shape == 'circle') {
+  //   exportCtx.globalCompositeOperation = 'destination-in';
+  //   exportCtx.fillStyle = 'white';
+  //   exportCtx.beginPath();
+  //   var r = .5 * mapWidth * downloadScale;
+  //   exportCtx.arc(dx + r, dy + r, r, 2 * Math.PI, false);
+  //   exportCtx.fill();
 
-  if (shape == 'circle') {
-    exportCtx.globalCompositeOperation = 'destination-in';
-    exportCtx.fillStyle = 'white';
-    exportCtx.beginPath();
-    var r = .5 * mapWidth * downloadScale;
-    exportCtx.arc(dx + r, dy + r, r, 2 * Math.PI, false);
-    exportCtx.fill();
+  //   exportCtx.globalCompositeOperation = 'destination-over';
+  //   exportCtx.fillStyle = '#fff';
+  //   exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
 
-    exportCtx.globalCompositeOperation = 'destination-over';
-    exportCtx.fillStyle = '#fff';
-    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+  //   exportCtx.globalCompositeOperation = 'source-over';
+  //   exportCtx.strokeStyle = '#666';
+  //   exportCtx.lineWidth = downloadScale;
+  //   exportCtx.beginPath();
+  //   exportCtx.arc(dx + r, dy + r, r, 2 * Math.PI, false);
+  //   exportCtx.stroke();
+  // } else {
+  //   exportCtx.strokeStyle = '#666';
+  //   exportCtx.lineWidth = downloadScale;
+  //   exportCtx.strokeRect(dx, dy, mapWidth * downloadScale, mapHeight * downloadScale);
+  // }
 
-    exportCtx.globalCompositeOperation = 'source-over';
-    exportCtx.strokeStyle = '#666';
-    exportCtx.lineWidth = downloadScale;
-    exportCtx.beginPath();
-    exportCtx.arc(dx + r, dy + r, r, 2 * Math.PI, false);
-    exportCtx.stroke();
-  } else {
-    exportCtx.strokeStyle = '#666';
-    exportCtx.lineWidth = downloadScale;
-    exportCtx.strokeRect(dx, dy, mapWidth * downloadScale, mapHeight * downloadScale);
-  }
-
-  if (aspectRatio !== 1 || shape !== 'full') {
-    var title = d3.select('#layout-title').html();
-    if (title) {
-      var textRect = d3.select('#layout-title').node().getBoundingClientRect();
-      dx = (textRect.right + textRect.left)/2;
-      dy = (textRect.bottom + textRect.top)/2;
-      dx -= pageRect.left;
-      dy -= pageRect.top; 
-      var fontSize = titleSize * downloadScale;
-      exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
-      exportCtx.textAlign = 'center';
-      exportCtx.textBaseline = 'middle';
-      exportCtx.fillStyle = d3.select('#layout-title').style('color');
-      exportCtx.fillText(title, dx * downloadScale, dy * downloadScale);
-    }
-    var subtitle = d3.select('#layout-subtitle').html();
-    if (subtitle) {
-      var textRect = d3.select('#layout-subtitle').node().getBoundingClientRect();
-      dx = (textRect.right + textRect.left)/2;
-      dy = (textRect.bottom + textRect.top)/2;
-      dx -= pageRect.left;
-      dy -= pageRect.top; 
-      var fontSize = labelSize * downloadScale;
-      exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
-      exportCtx.textAlign = 'center';
-      exportCtx.textBaseline = 'middle';
-      exportCtx.fillStyle = d3.select('#layout-subtitle').style('color');
-      exportCtx.fillText(subtitle, dx * downloadScale, dy * downloadScale);
-    }
-  }
+  // if (aspectRatio !== 1 || shape !== 'full') {
+  //   var title = d3.select('#layout-title').html();
+  //   if (title) {
+  //     var textRect = d3.select('#layout-title').node().getBoundingClientRect();
+  //     dx = (textRect.right + textRect.left)/2;
+  //     dy = (textRect.bottom + textRect.top)/2;
+  //     dx -= pageRect.left;
+  //     dy -= pageRect.top; 
+  //     var fontSize = titleSize * downloadScale;
+  //     exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
+  //     exportCtx.textAlign = 'center';
+  //     exportCtx.textBaseline = 'middle';
+  //     exportCtx.fillStyle = d3.select('#layout-title').style('color');
+  //     exportCtx.fillText(title, dx * downloadScale, dy * downloadScale);
+  //   }
+  //   var subtitle = d3.select('#layout-subtitle').html();
+  //   if (subtitle) {
+  //     var textRect = d3.select('#layout-subtitle').node().getBoundingClientRect();
+  //     dx = (textRect.right + textRect.left)/2;
+  //     dy = (textRect.bottom + textRect.top)/2;
+  //     dx -= pageRect.left;
+  //     dy -= pageRect.top; 
+  //     var fontSize = labelSize * downloadScale;
+  //     exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
+  //     exportCtx.textAlign = 'center';
+  //     exportCtx.textBaseline = 'middle';
+  //     exportCtx.fillStyle = d3.select('#layout-subtitle').style('color');
+  //     exportCtx.fillText(subtitle, dx * downloadScale, dy * downloadScale);
+  //   }
+  // }
 
   if (!HTMLCanvasElement.prototype.toBlob) {
    Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
@@ -1262,6 +1227,10 @@ function downloadPage () {
   }
 
   exportCanvas.toBlob(function(blob) {
+    blob.name = 'contours' + new Date().valueOf();
+    
+    // getSignedRequest(blob) // getting CORS error
+    
     var tempLink = document.createElement('a');
     tempLink.style.display = 'none';
     var url = window.URL.createObjectURL(blob);
@@ -1278,6 +1247,41 @@ function downloadPage () {
       window.URL.revokeObjectURL(url);
     }, 500);
   }, "image/png");
+}
+
+function getSignedRequest( file ){
+  const xhr = new XMLHttpRequest();
+  xhr.open( 'GET', 'https://map-store-images.herokuapp.com/sign?file-name=' + file.name + '&file-type=' + file.type );
+  xhr.onreadystatechange = function(){
+    if( xhr.readyState === 4 ){
+      if( xhr.status === 200 ){
+        const response = JSON.parse( xhr.responseText );
+        uploadFile( file, response.signedRequest, response.url );
+      }
+      else{
+        alert( 'Could not get signed URL.' );
+      }
+    }
+  };
+  xhr.send();
+}
+
+function uploadFile( file, signedRequest, url ){
+  const xhr = new XMLHttpRequest();
+  xhr.open( 'PUT', signedRequest );
+  xhr.setRequestHeader( 'content-type', file.type );
+  xhr.onreadystatechange = function(){
+    if( xhr.readyState === 4 ){
+      if( xhr.status === 200 ){
+        console.log(xhr)
+        // SUCCESS!
+      }
+      else{
+        alert( 'Could not upload file.' );
+      }
+    }
+  };
+  xhr.send( file );
 }
 
 function downloadGeoJson () {
