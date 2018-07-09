@@ -27,6 +27,7 @@ canvas {
 
 #guides {
   position: absolute;
+  pointer-events: none;
 }
 
 .guide {
@@ -357,7 +358,7 @@ div.disabled {
   position: absolute;
   top: 40px;
   right: 20px;
-  z-index: 500;
+  z-index: 3000;
   box-shadow: 0 0 10px rgba(0,0,0,.5);
 }
 

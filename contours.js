@@ -1152,7 +1152,7 @@ function downloadPage () {
   exportContours.height = Math.round(contourCanvas.height * downloadScale);
   drawContoursScaled(exportContours);
 
-  exportCtx.drawImage(exportContours, -buffer * downloadScale, -buffer * downloadScale)
+  exportCtx.drawImage(exportContours, -buffer * downloadScale, -buffer * downloadScale);
 
   // if (shape == 'circle') {
   //   exportCtx.globalCompositeOperation = 'destination-in';
@@ -1178,7 +1178,7 @@ function downloadPage () {
   //   exportCtx.strokeRect(dx, dy, mapWidth * downloadScale, mapHeight * downloadScale);
   // }
 
-  // if (aspectRatio !== 1 || shape !== 'full') {
+  // if (aspectRatio !== 1 || orientation !== 'landscape') {
   //   var title = d3.select('#layout-title').html();
   //   if (title) {
   //     var textRect = d3.select('#layout-title').node().getBoundingClientRect();
@@ -1193,21 +1193,106 @@ function downloadPage () {
   //     exportCtx.fillStyle = d3.select('#layout-title').style('color');
   //     exportCtx.fillText(title, dx * downloadScale, dy * downloadScale);
   //   }
-  //   var subtitle = d3.select('#layout-subtitle').html();
-  //   if (subtitle) {
-  //     var textRect = d3.select('#layout-subtitle').node().getBoundingClientRect();
-  //     dx = (textRect.right + textRect.left)/2;
-  //     dy = (textRect.bottom + textRect.top)/2;
-  //     dx -= pageRect.left;
-  //     dy -= pageRect.top; 
-  //     var fontSize = labelSize * downloadScale;
-  //     exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
-  //     exportCtx.textAlign = 'center';
-  //     exportCtx.textBaseline = 'middle';
-  //     exportCtx.fillStyle = d3.select('#layout-subtitle').style('color');
-  //     exportCtx.fillText(subtitle, dx * downloadScale, dy * downloadScale);
-  //   }
-  // }
+  //   // var subtitle = d3.select('#layout-subtitle').html();
+    // if (subtitle) {
+    //   var textRect = d3.select('#layout-subtitle').node().getBoundingClientRect();
+    //   dx = (textRect.right + textRect.left)/2;
+    //   dy = (textRect.bottom + textRect.top)/2;
+    //   dx -= pageRect.left;
+    //   dy -= pageRect.top; 
+    //   var fontSize = labelSize * downloadScale;
+    //   exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
+    //   exportCtx.textAlign = 'center';
+    //   exportCtx.textBaseline = 'middle';
+    //   exportCtx.fillStyle = d3.select('#layout-subtitle').style('color');
+    //   exportCtx.fillText(subtitle, dx * downloadScale, dy * downloadScale);
+    // }
+  //}
+
+  if (!HTMLCanvasElement.prototype.toBlob) {
+   Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+    value: function (callback, type, quality) {
+
+      var binStr = atob( this.toDataURL(type, quality).split(',')[1] ),
+          len = binStr.length,
+          arr = new Uint8Array(len);
+
+      for (var i=0; i<len; i++ ) {
+       arr[i] = binStr.charCodeAt(i);
+      }
+
+      callback( new Blob( [arr], {type: type || 'image/png'} ) );
+    }
+   });
+  }
+
+  exportCanvas.toBlob(function(blob) {
+    blob.name = 'contours' + new Date().valueOf();
+    
+    // getSignedRequest(blob) // getting CORS error
+    
+    var tempLink = document.createElement('a');
+    tempLink.style.display = 'none';
+    var url = window.URL.createObjectURL(blob);
+    tempLink.href = url;
+    tempLink.setAttribute('download', 'contours.png');
+    if (typeof tempLink.download === 'undefined') {
+        tempLink.setAttribute('target', '_blank');
+    }
+    
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
+    setTimeout(function () {
+      window.URL.revokeObjectURL(url);
+    }, 500);
+  }, "image/png");
+}
+
+function downloadPageWithTitle (aspect) {
+  var title = d3.select('#title').node().value;
+  if (aspectRatio == 1 || !title) {
+    downloadPage();
+    return;
+  }
+  var smallSidePx = 5000;
+  var rect = d3.select('.guide[data-aspect="' + aspect + '"]')
+    .style('display', 'block')
+    .select('.portrait')
+    .node()
+    .getBoundingClientRect();
+  downloadScale = 5000 / rect.width;
+  var exportCanvas = document.createElement('canvas');
+  exportCanvas.width = rect.width * downloadScale;
+  exportCanvas.height = rect.height * downloadScale;
+  var exportCtx = exportCanvas.getContext('2d');
+  exportCtx.fillStyle = '#fff';
+  exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+  var exportContours = document.createElement('canvas');
+  exportContours.width = Math.round(contourCanvas.width * downloadScale);
+  exportContours.height = Math.round(contourCanvas.height * downloadScale);
+  drawContoursScaled(exportContours);
+
+  titleSize = baseTitleSize * rect.width / 710;
+  var fontSize = titleSize * downloadScale;
+
+  var sx = rect.left - mapNodeRect.left + buffer;
+  var sy = mapNodeRect.height/2 - rect.height * .4 + buffer;
+
+  exportCtx.strokeStyle = '#666';
+  exportCtx.lineWidth = downloadScale;
+  exportCtx.drawImage(exportContours, sx * downloadScale, sy * downloadScale, rect.width * downloadScale, rect.height * .8 * downloadScale, 0, 0, smallSidePx, exportCanvas.height * .8);
+  exportCtx.strokeRect(downloadScale/2, downloadScale/2, smallSidePx - downloadScale, exportCanvas.height * .8 - downloadScale);
+  var dx = smallSidePx / 2;
+  var dy = exportCanvas.height * 9/10;
+  exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
+  exportCtx.textAlign = 'center';
+  exportCtx.textBaseline = 'middle'
+  exportCtx.fillStyle = d3.select('#title-color-text').node().value;
+  exportCtx.fillText(title, dx, dy);
+
+  
 
   if (!HTMLCanvasElement.prototype.toBlob) {
    Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
