@@ -1227,9 +1227,9 @@ function downloadPage () {
   }
 
   exportCanvas.toBlob(function(blob) {
-    blob.name = 'contours' + new Date().valueOf();
+    blob.name = 'contours.png';
     
-    // getSignedRequest(blob) // getting CORS error
+    getSignedRequest(blob) // getting CORS error
     
     var tempLink = document.createElement('a');
     tempLink.style.display = 'none';
