@@ -1229,7 +1229,7 @@ function downloadPage () {
   exportCanvas.toBlob(function(blob) {
     blob.name = 'contours.png';
     
-    getSignedRequest(blob) // getting CORS error
+    getSignedRequest(blob);
     
     var tempLink = document.createElement('a');
     tempLink.style.display = 'none';
@@ -1312,9 +1312,9 @@ function downloadPageWithTitle (aspect) {
   }
 
   exportCanvas.toBlob(function(blob) {
-    blob.name = 'contours' + new Date().valueOf();
+    blob.name = 'contours.png';
     
-    // getSignedRequest(blob) // getting CORS error
+    getSignedRequest(blob);
     
     var tempLink = document.createElement('a');
     tempLink.style.display = 'none';
@@ -1358,8 +1358,8 @@ function uploadFile( file, signedRequest, url ){
   xhr.onreadystatechange = function(){
     if( xhr.readyState === 4 ){
       if( xhr.status === 200 ){
-        console.log(xhr)
-        // SUCCESS!
+        let id = url.match(/https:\/\/.*?\/(.*?)\//)[1];
+        document.cookie = `id=${id};domain=.axismaps.io;path=/`;
       }
       else{
         alert( 'Could not upload file.' );
