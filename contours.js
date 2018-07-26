@@ -1359,7 +1359,7 @@ function uploadFile( file, signedRequest, url ){
     if( xhr.readyState === 4 ){
       if( xhr.status === 200 ){
         let id = url.match(/https:\/\/.*?\/(.*?)\//)[1];
-        document.cookie = `id=${id};domain=.axismaps.io;path=/`;
+        document.cookie = `custom_image_id=${id};domain=.axismaps.io;path=/`;
         alert( 'Upload complete' );
       }
       else{
