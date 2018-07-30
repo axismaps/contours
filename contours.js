@@ -1360,7 +1360,8 @@ function uploadFile( file, signedRequest, url ){
       if( xhr.status === 200 ){
         let id = url.match(/https:\/\/.*?\/(.*?)\//)[1];
         document.cookie = `custom_image_id=${id};domain=.axismaps.io;path=/`;
-        alert( 'Upload complete' );
+        let c = confirm('Upload complete! View generated products in store?');
+        if (c) top.window.location.href='https://store.axismaps.io/collections/contours';
       }
       else{
         alert( 'Could not upload file.' );
