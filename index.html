@@ -106,56 +106,21 @@
           <div class="settings-content">
             <div class="settings-section"><button id="title-color"  type="color" value ="#333333"></button><span>Title color</span><label><input class="color-input" id="title-color-text" type="text" value ="#333333"/></label></div>
           </div>
-          <p class="settings-title inline">Subtitle</p>
-          <div class="settings-content">
-            <textarea id="subtitle"></textarea>
-          </div>
-          <div class="settings-content">
-            <div class="settings-section"><button id="subtitle-color"  type="color" value ="#666666"></button><span>Subtitle color</span><label><input class="color-input" id="subtitle-color-text" type="text" value ="#666666"/></label></div>
-          </div>
-        </div>
-        <div class='settings-row label'>
-          <p class="settings-title inline">Map label</p>
-          <div class="settings-content">
-            <input type="text" id="label">
-          </div>
-          <div class="settings-content">
-            <div class="settings-section"><button id="label-color"  type="color" value ="#000000"></button><span>Label color</span><label><input class="color-input" id="label-color-text" type="text" value ="#000000"/></label></div>
-          </div>
-        </div>
-        <div class='settings-row font'>
-          <p class="settings-title inline">Font</p>
-            <div class="settings-content">
-            <select id="fonts">
-            </select>
-          </div>
-        </div>
-        <div class='settings-row type'>
-          <p class="settings-title inline">Map Type</p>
-            <div class="settings-content">
-            <label class="type"><input type="radio" name="type" checked value="lines"/><span>Contour lines</span></label>
-            <label class="type"><input type="radio" name="type" value="illuminated"/><span>Illuminated contour polygons</span></label>
-          </div>
         </div>
         <div class='settings-row unit'>
           <p class="settings-title">Contour Interval</p>
             <div class="settings-content">
             <div class="settings-section">
               <div class="row-icon"><img src="img/icon_contours.png"/></div>
-              <input type="text" value="500" id="interval-input"/>
+              <input type="range" id="interval-input"
+                min="0" max="8" value="5" step="1" />
               <span></span>
               <label><input type="radio" name="unit" value="m"/><span>meters</span></label>
               <label><input type="radio" name="unit" checked value="ft"/><span>feet</span></label>
             </div>
             <div class="settings-section">
               <div class="row-icon"><img src="img/icon_major.png"/></div>
-              <span>Index line interval</span>
-              <select id="major">
-                <option value="0">None</option>
-                <option value="2"></option>
-                <option value="5"></option>
-                <option value="10"></option>
-              </select>
+              <label>Index lines <input type="checkbox" checked/></label>
             </div>
           </div>
         </div>

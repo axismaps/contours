@@ -70,6 +70,7 @@ var svgPath = d3.geoPath();
 
 var min;
 var max;
+var intervals = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
 var interval;
 var majorInterval = 0;
 var indexInterval = 0;
@@ -286,25 +287,26 @@ d3.select('.map-label')
       })
   });
 
-d3.select('#fonts').selectAll('option.font')
-  .data(fonts)
-  .enter()
-  .append('option')
-  .attr('class', 'font')
-  .attr('value', function (d){ return d.className })
-  .attr('selected', function (d, i) { return i == 0 ? true : null })
-  .html(function (d){ return d.name });
+// d3.select('#fonts').selectAll('option.font')
+//   .data(fonts)
+//   .enter()
+//   .append('option')
+//   .attr('class', 'font')
+//   .attr('value', function (d){ return d.className })
+//   .attr('selected', function (d, i) { return i == 0 ? true : null })
+//   .html(function (d){ return d.name });
 
-d3.select('#map-container').classed(d3.select('#fonts').node().value, true);
+//d3.select('#map-container').classed(d3.select('#fonts').node().value, true);
 
-d3.select('#fonts').on('change', function () {
-  var c = d3.select('#map-container').attr('class');
-  d3.select('#map-container').attr('class', c.replace(/tk\S+/, ''))
-    .classed(this.value, true);
-});
+// d3.select('#fonts').on('change', function () {
+//   var c = d3.select('#map-container').attr('class');
+//   d3.select('#map-container').attr('class', c.replace(/tk\S+/, ''))
+//     .classed(this.value, true);
+// });
 
-d3.select('#interval-input').on('keyup', function () {
-  if (+this.value == interval) return;
+d3.select('#interval-input').on('change', function () {
+  //console.log(this.value)
+  if (intervals[+this.value] == interval) return;
   clearTimeout(wait);
   wait = setTimeout(function () { load(getContours) },500);
 });
@@ -832,7 +834,20 @@ function getContours () {
   if (belowZero.length < 100) min = d3.min(aboveZero);  // if there are very few values below zero, they're probably junk data. use only values >= 0
   else min = d3.min(values);
 
-  interval = +d3.select('#interval-input').node().value;
+  interval = intervals[+d3.select('#interval-input').node().value];
+
+  /*
+  if (max - min > 10000) {
+    interval = 1000;
+  } else if (max - min > 7500) {
+    interval = 500;
+  } else if (max - min > 3000) {
+    interval = 100;
+  } else {
+    interval = 50;
+  }
+  if (map.getZoom() < 14) interval *= 2; // attempting to factor in zoom level
+  */
 
   max = Math.ceil(max/interval) * interval;
   min = Math.floor(min/interval) * interval;
@@ -957,7 +972,7 @@ function drawContours(svg) {
         });
       }
 
-      majorInterval = (indexInterval || +d3.select('#major').node().value) * interval;
+      majorInterval = 5 * interval;
       
       // draw thicker index lines, if desired
       if (majorInterval != 0) {
@@ -1121,7 +1136,7 @@ function drawContoursScaled (canvas) {
       dx -= contourRect.left;
       dy -= contourRect.top; 
       var fontSize = labelSize * downloadScale;
-      strokeCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
+      strokeCtx.font = fontSize + "px 'Helvetica'"// + d3.select('#fonts').node().value.replace('tk-', '') + "'";
       strokeCtx.textAlign = 'center';
       strokeCtx.textBaseline = 'middle';
       strokeCtx.fillStyle = mapLabel.style('color');
@@ -1286,7 +1301,7 @@ function downloadPageWithTitle (aspect) {
   exportCtx.strokeRect(downloadScale/2, downloadScale/2, smallSidePx - downloadScale, exportCanvas.height * .8 - downloadScale);
   var dx = smallSidePx / 2;
   var dy = exportCanvas.height * 9/10;
-  exportCtx.font = fontSize + "px '" + d3.select('#fonts').node().value.replace('tk-', '') + "'";
+  exportCtx.font = fontSize + "px 'Helvetica'"// + d3.select('#fonts').node().value.replace('tk-', '') + "'";
   exportCtx.textAlign = 'center';
   exportCtx.textBaseline = 'middle'
   exportCtx.fillStyle = d3.select('#title-color-text').node().value;
