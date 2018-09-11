@@ -7,6 +7,9 @@ html, body {
 
 #wrapper {
   position: relative;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
 }
 
 canvas {
@@ -15,14 +18,14 @@ canvas {
   left:0;
 }
 
-#map-container {
-  position: relative;
-  width: calc(100% - 300px);
-  margin-left: 300px;
-  height: calc(100% - 30px);
+main {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex: 1;
+}
+
+#map-container {
+  flex: 1;
+  overflow: hidden;
 }
 
 #guides {
@@ -108,7 +111,6 @@ canvas {
 #map {
   width: 100%;
   height: 100%;
-  border: 1px solid #666;
   overflow: hidden;
   z-index: 1000;
 }
@@ -140,6 +142,7 @@ header {
   box-sizing: border-box;
   box-shadow: 0 0 5px rgba(0,0,0,.5);
   overflow: auto;
+  display: none;
 }
 
 .panel-open #panels {
@@ -176,7 +179,7 @@ header {
   width: 50px;
   height: 50px;
   box-shadow: 2px 0 2px rgba(0,0,0,.5);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
 }
@@ -222,8 +225,7 @@ header {
 }
 
 .settings-section {
-  margin-bottom: 20px;
-  display: flex;
+  margin: 10px 0;
   align-items: center;
 }
 
@@ -250,14 +252,9 @@ label.bg, label.type {
 }
 
 button[type="color"], div.row-icon {
-  margin-right: 20px;
+  margin-right: 10px;
   width: 45px;
   height: 20px;
-  display: inline-block;
-}
-
-input[type="checkbox"]{
-  margin-bottom: 15px;
 }
 
 input[type="radio"] {
@@ -305,8 +302,14 @@ input[type="radio"][name="unit"] + span{
   width: 200px;
 }
 
-#settings input[type="text"].color-input {
-  width: 80px !important;
+input[type="text"].color-input {
+  width: 50px !important;
+  font-size: 11px;
+}
+
+button[type="color"], input[type="text"].color-input {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 #settings .titles textarea {
@@ -426,8 +429,8 @@ div.disabled {
 
 #zoom-controls {
   position: absolute;
-  top: 10px;
-  left: 70px;
+  top: 50px;
+  left: 320px;
   z-index: 3000;
 }
 
@@ -440,4 +443,93 @@ div.disabled {
   text-align: center;
   margin-bottom: 10px;
   cursor: pointer;
+}
+
+#main-panels {
+  width: 300px;
+  background-color: white;
+  border-right: 1px solid #ccc;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  overflow: hidden;
+  height: calc(100% - 100px);
+}
+
+.options-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 15px 0;
+}
+
+.options-panel > * {
+  padding: 0 15px;
+}
+
+.options-panel label {
+  font-size: 12px;
+}
+
+#interval-input {
+  margin-right: 10px;
+}
+
+.contour-controls {
+  display: flex;
+  align-items: center;
+}
+
+.options-panel .contour-controls label.contour-label {
+  width: 40px;
+  display: block;
+  text-align: right;
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.contour-controls .buttons {
+  flex: 0;
+}
+
+.options-panel h2, .options-panel .panel-footer {
+  flex: 0;
+}
+
+.panel-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.panel-footer {
+  padding: 15px;
+}
+
+.panel-footer.options {
+  background-color: #f7f7f7;
+}
+
+.shape-icon {
+  border: 2px solid rgba(0,0,0,.87);
+  width: 40px;
+  height: 40px;
+  margin: auto;
+}
+
+.shape-icon.circle {
+  border-radius: 50%;
+}
+
+.ui.card.selected {
+  background-color: #eaeaea;
+  box-shadow: 0 0 8px rgba(0,0,0,.5);
+}
+
+.color-options.ocean {
+  display: none;
+}
+
+#set-extent {
+  display: none;
 }

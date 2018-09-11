@@ -13,10 +13,13 @@
   <link href="https://fonts.googleapis.com/css?family=Noto+Sans:400,400i,700" rel="stylesheet">
   <link href='https://api.mapbox.com/mapbox.js/v3.1.1/mapbox.css' rel='stylesheet' />
   <link rel="stylesheet" href="css/fontello.css" />
+  <link rel="stylesheet" href="semantic/semantic.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <meta charset="utf-8">
   <script src='https://api.mapbox.com/mapbox.js/v3.1.1/mapbox.js'></script>
   <script src="lib/leaflet-hash.js"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="semantic/semantic.min.js"></script>
   <script src="https://d3js.org/d3-selection.v1.min.js"></script>
   <script src="https://d3js.org/d3-contour.v1.min.js"></script>
   <script src="https://d3js.org/d3-geo.v1.min.js"></script>
@@ -39,14 +42,208 @@
   <a id="axis-link" href="www.axismaps.com" target="_blank"><img src="https://www.axismaps.com/images/logo_small.png"></a>
   <div id='wrapper'>
     <header>CONTOURS</header>
-    <div id='map-container' class="show">
-      <div id="map"></div>
-      <div class="map-label"></div>
-      <div id="guides">
+    <main>
+      <div id="main-panels">
+        <div id="choose-style" class="options-panel">
+          <h2 class="ui header">Map style</h2>
+          <h3>Choose a style</h3>
+          <div class="panel-content">
+            <div class="ui one link cards">
+              <div class="ui fluid card selected square">
+                <div class="content">
+                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Style 1</div>
+                </div>
+              </div>
+              <div class="ui fluid card square">
+                <div class="content">
+                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Style 2</div>
+                </div>
+              </div>
+              <div class="ui fluid card square">
+                <div class="content">
+                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Style 3</div>
+                </div>
+              </div>
+              <div class="ui fluid card square">
+                <div class="content">
+                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Style 4</div>
+                </div>
+              </div>
+              <div class="ui fluid card square">
+                <div class="content">
+                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Style 5</div>
+                </div>
+              </div>
+              <div class="ui fluid card square">
+                <div class="content">
+                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Style 6</div>
+                </div>
+              </div>
+              <div class="ui fluid card square">
+                <div class="content">
+                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Style 1</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-footer options">
+            <h3>Or customize your map style</h3>
+            <div class="ui grid two color-options land">
+              <div class="settings-section">
+                <h5>Background</h5>
+                <button id="solid-color" type="color" value="#fffcfa"></button>
+                <label><input class="color-input" id="solid-color-text" type="text" value="#fffcfa"></label>
+              </div>
+              <div class="settings-section">
+                <h5>Lines</h5>
+                <button id="line-color" type="color" value="#8c7556"></button>
+                <label><input class="color-input" id="line-color-text" type="text" value="#8c7556"></label>
+              </div>
+            </div>
+            <div class="ui grid two color-options ocean">
+              <div class="settings-section">
+                <h5>Ocean</h5>
+                <button id="ocean-color" type="color" value="#fffcfa"></button>
+                <label><input class="color-input" id="solid-color-text" type="text" value="#fffcfa"></label>
+              </div>
+              <div class="settings-section">
+                <h5>Undersea lines</h5>
+                <button id="ocean-line-color" type="color" value="#8c7556"></button>
+                <label><input class="color-input" id="line-color-text" type="text" value="#8c7556"></label>
+              </div>
+            </div>
+            <div class="settings-section">
+              <label for="ocean-check"><input type="checkbox" checked=""> Use same colors below sea level</label>
+            </div>
+            <div class="settings-section">
+              <h5>Contour interval</h5>
+              <div class="contour-controls">
+                <input type="range" id="interval-input" min="0" max="8" value="5" step="1">
+                <label class="contour-label">200</label>
+                <div class="grouped fields">
+                  <div class="field">
+                    <div class="ui radio checkbox">
+                      <input type="radio" name="units">
+                      <label>meters</label>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="ui radio checkbox">
+                      <input type="radio" name="units" checked="checked">
+                      <label>feet</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <label for="index-check"><input type="checkbox" checked=""> Show index lines</label>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <div class="ui right floated button">
+              Next <i class="right arrow icon"></i>
+            </div>
+          </div>          
+        </div>
+
+        <div id="set-extent" class="options-panel">
+          <h2 class="ui header">Set map extent</h2>
+          <div class="panel-content">
+            <p>Choose a map frame shape below, then search and/or move the map on screen to the area you want to show.</p>
+            <div class="ui link cards">
+              <div class="ui card selected square">
+                <div class="content">
+                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Square</div>
+                  <div class="description">The map will be cropped to a square inside each product's available space.</div>
+                </div>
+              </div>
+              <div class="ui fluid card circle">
+                <div class="content">
+                  <div class="center aligned header"><i class="circle outline icon huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Circle</div>
+                  <div class="description">The map will be cropped to a circle inside each product's available space.</div>
+                </div>
+              </div>
+              <div class="ui fluid card full">
+                <div class="content">
+                  <div class="center aligned header"><i class="expand arrows alternate icon huge"></i></div>
+                </div>
+                <div class="content">
+                  <div class="center aligned header">Full page</div>
+                  <div class="description">The map will be cropped to the full space available on each product.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <div class="ui right floated button">
+              Next <i class="right arrow icon"></i>
+            </div>
+          </div>      
+        </div>
       </div>
-      <div id="zoom-controls">
-        <button id="zoom-in"><i class="icon-plus"></i></button>
-        <button id="zoom-out"><i class="icon-minus"></i></button>
+
+      <div id='map-container' class="show">
+        <div id="map"></div>
+        <div class="map-label"></div>
+        <div id="guides">
+        </div>
+        <div id="zoom-controls">
+          <button id="zoom-in"><i class="icon-plus"></i></button>
+          <button id="zoom-out"><i class="icon-minus"></i></button>
+        </div>
+      </div>
+
+    </main>
+    <div class="ui mini four steps">
+      <div class="active step">
+        <i class="tint icon"></i>
+        <div class="content">
+          <div class="title">Choose style</div>
+        </div>
+      </div>
+      <div class="step">
+        <i class="map icon"></i>
+        <div class="content">
+          <div class="title">Set map extent</div>
+        </div>
+      </div>
+      <div class="step">
+        <i class="font icon"></i>
+        <div class="content">
+          <div class="title">Add title</div>
+        </div>
+      </div>
+      <div class="step">
+        <i class="payment icon"></i>
+        <div class="content">
+          <div class="title">Preview and check out</div>
+        </div>
       </div>
     </div>
 
