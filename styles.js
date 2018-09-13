@@ -68,7 +68,7 @@ var styles = {
       },
       water: {
         stroke: {
-          strokeStyle: '#8C7556',
+          strokeStyle: '#879FAF',
           lineWidth: defaultLineWidth
         },
         fill: {

@@ -90,6 +90,7 @@ var lineWidth = .75;
 var lineWidthMajor = 1.5;
 var lineColor = '#8c7556';
 var indexLineColor = '#8c7556';
+var oceanLineColor = '#8c7556';
 
 var highlightColor = 'rgba(177,174,164,.5)';
 var shadowColor = '#5b5143';
@@ -159,6 +160,133 @@ window.onresize = function () {
   clearTimeout(wait);
   wait = setTimeout(getRelief,500);
 }
+
+$('#choose-style .panel-footer.options h3').click(function() {
+  $('#choose-style .panel-footer.options').toggleClass('expanded');
+});
+
+$('#ocean-check').on('change', function(){
+  if (this.checked) {
+    $('.color-options.ocean').css('display', 'none');
+    // and reset colors
+  } else {
+    $('.color-options.ocean').css('display', 'flex');
+  }
+});
+
+var styleCards = d3.select('#choose-style .panel-content .styles')
+  .selectAll('div.style')
+  .data(Object.keys(styles).filter(function (d){ return styles[d].type === 'contour' && styles[d].style.land.fill.type === 'solid' }))
+  .enter()
+  .append('div')
+  .attr('class', 'style')
+  .on('click', function (d) {
+    var style = styles[d];
+    if (style.type === 'contour') type = 'lines';
+    else type = 'illuminated';
+    lineWidth = style.style.land.stroke.lineWidth;
+    lineColor = style.style.land.stroke.strokeStyle;
+    lineWidthMajor = 2 * style.style.land.stroke.lineWidth;
+
+    if (type == 'illuminated') highlightColor = style.style.land.stroke.strokeStyle;
+
+    if (style.style.land.fill.type == 'gradient') colorType = 'hypso';
+    else colorType = style.style.land.fill.type;
+
+    if (style.style.land.fill.fillStyle) solidColor = style.style.land.fill.fillStyle;
+    else if (style.style.land.fill.colors) hypsoColor.range(style.style.land.fill.colors);
+
+    if (style.style.indexLine) {
+      indexLineColor = style.style.indexLine.stroke.strokeStyle;
+    } else {
+      indexLineColor = lineColor;
+    }
+
+    if (style.style.water) {
+      if (style.style.water.fill.type == 'gradient') bathyColorType = 'bathy';
+      else bathyColorType = style.style.water.fill.type;
+
+      if (style.style.water.fill.fillStyle) oceanColor = style.style.water.fill.fillStyle;
+      else if (style.style.water.fill.colors) bathyColor.range(style.style.water.fill.colors);
+
+      if (style.style.water.stroke) oceanLineColor = style.style.water.stroke.strokeStyle;
+      else oceanLineColor = style.style.land.stroke.strokeStyle;
+    } else {
+      bathyColorType = 'none';
+      oceanColor = solidColor;
+      oceanLineColor = lineColor;
+    }
+
+    if (oceanColor !== solidColor || oceanLineColor !== lineColor) {
+      $('#ocean-check').attr('checked', false);
+      $('.color-options.ocean').css('display', 'flex');
+    } else {
+      $('#ocean-check').attr('checked', true);
+      $('.color-options.ocean').css('display', 'none');
+    }
+
+    if (style.options) {
+      if (style.options.indexInterval) indexInterval = style.options.indexInterval;
+      else indexInterval = 0;
+    }
+//d3.select('#' + this.id.replace('-text','')).node().picker.fromString(toHex(this.value));
+d3.select('#solid-color').node().picker.fromString(toHex(solidColor));
+$('#solid-color-text').val(toHex(solidColor));
+
+d3.select('#line-color').node().picker.fromString(toHex(lineColor));
+$('#line-color-text').val(toHex(lineColor));
+
+d3.select('#ocean-color').node().picker.fromString(toHex(oceanColor));
+$('#ocean-color-text').val(toHex(oceanColor));
+
+d3.select('#ocean-line-color').node().picker.fromString(toHex(oceanLineColor));
+$('#ocean-line-color-text').val(toHex(oceanLineColor));
+
+    drawContours();
+  })
+
+styleCards
+  .append('div')
+  .each(function (d) {
+    var content = this;
+    d3.xml("thumbnail.svg").mimeType("image/svg+xml").get(function(error, xml) {
+      if (error) throw error;
+      content.appendChild(xml.documentElement);
+      d3.select(content).select('.land')
+        .style('fill', styles[d].style.land.fill.fillStyle)
+        .style('stroke', styles[d].style.land.stroke.strokeStyle);
+      if (styles[d].style.water) {
+        d3.select(content).select('.ocean')
+          .style('fill', styles[d].style.water.fill.fillStyle)
+          .style('stroke', styles[d].style.water.stroke.strokeStyle);
+      } else {
+        d3.select(content).select('.ocean')
+          .style('fill', styles[d].style.land.fill.fillStyle)
+          .style('stroke', styles[d].style.land.stroke.strokeStyle);
+      }
+      d3.select(content).select('.land').selectAll('path')
+        .classed('index', function (d, i) {
+          return i % 5 === 0;
+        });
+      var oceanCount = d3.select(content).select('.ocean').selectAll('path').size();
+      d3.select(content).select('.ocean').selectAll('path')
+        .classed('index', function (d, i) {
+          return (oceanCount - i) % 5 === 0;
+        });
+    });
+  });
+
+styleCards
+  .append('div')
+  .attr('class', 'ui divider')
+
+styleCards
+  .append('div')
+  .attr('class', 'content')
+  .append('h5')
+  .attr('class', 'center aligned')
+  .html(function (d){ return styles[d].name});
+
 
 /* UI event handlers */
 
@@ -956,12 +1084,14 @@ function drawContours(svg) {
           contourContext.beginPath();
           var fill;
           if (c.value >= 0 || bathyColorType == 'none') {
+            contourContext.strokeStyle = lineColor;
             if (colorType == 'hypso') fill = hypsoColor(c.value);
             else if (colorType == 'solid') fill = solidColor;
             else if (bathyColorType != 'none') fill = '#fff'; // to mask out ocean if ocean is colored
           } else {
             if (bathyColorType == 'bathy') fill = bathyColor(c.value);
             else if (bathyColorType == 'solid') fill = oceanColor;
+            contourContext.strokeStyle = oceanLineColor;
           }
           path(c);
           if (fill) {
@@ -977,12 +1107,15 @@ function drawContours(svg) {
       // draw thicker index lines, if desired
       if (majorInterval != 0) {
         contourContext.lineWidth = lineWidthMajor;
-        contourContext.strokeStyle = indexLineColor;
-        contourContext.beginPath();
         contoursGeoData.forEach(function (c) {
+          contourContext.beginPath();
+          if (indexLineColor === lineColor)
+            contourContext.strokeStyle = c.value < 0 ? oceanLineColor : lineColor;
+          else
+            contourContext.strokeStyle = indexLineColor;
           if (c.value % majorInterval == 0) path(c);
+          contourContext.stroke();
         });
-        contourContext.stroke();
       }
 
     }

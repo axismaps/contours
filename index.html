@@ -48,67 +48,12 @@
           <h2 class="ui header">Map style</h2>
           <h3>Choose a style</h3>
           <div class="panel-content">
-            <div class="ui one link cards">
-              <div class="ui fluid card selected square">
-                <div class="content">
-                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
-                </div>
-                <div class="content">
-                  <div class="center aligned header">Style 1</div>
-                </div>
-              </div>
-              <div class="ui fluid card square">
-                <div class="content">
-                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
-                </div>
-                <div class="content">
-                  <div class="center aligned header">Style 2</div>
-                </div>
-              </div>
-              <div class="ui fluid card square">
-                <div class="content">
-                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
-                </div>
-                <div class="content">
-                  <div class="center aligned header">Style 3</div>
-                </div>
-              </div>
-              <div class="ui fluid card square">
-                <div class="content">
-                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
-                </div>
-                <div class="content">
-                  <div class="center aligned header">Style 4</div>
-                </div>
-              </div>
-              <div class="ui fluid card square">
-                <div class="content">
-                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
-                </div>
-                <div class="content">
-                  <div class="center aligned header">Style 5</div>
-                </div>
-              </div>
-              <div class="ui fluid card square">
-                <div class="content">
-                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
-                </div>
-                <div class="content">
-                  <div class="center aligned header">Style 6</div>
-                </div>
-              </div>
-              <div class="ui fluid card square">
-                <div class="content">
-                  <div class="center aligned header"><i class="square icon outline huge"></i></div>
-                </div>
-                <div class="content">
-                  <div class="center aligned header">Style 1</div>
-                </div>
-              </div>
+            <div class="ui centered styles">
+              
             </div>
           </div>
           <div class="panel-footer options">
-            <h3>Or customize your map style</h3>
+            <h3><i class="ui icon setting"></i><i class="ui floated icon angle down"></i>Or customize your map style</h3>
             <div class="ui grid two color-options land">
               <div class="settings-section">
                 <h5>Background</h5>
@@ -116,7 +61,7 @@
                 <label><input class="color-input" id="solid-color-text" type="text" value="#fffcfa"></label>
               </div>
               <div class="settings-section">
-                <h5>Lines</h5>
+                <h5>Contour lines</h5>
                 <button id="line-color" type="color" value="#8c7556"></button>
                 <label><input class="color-input" id="line-color-text" type="text" value="#8c7556"></label>
               </div>
@@ -125,16 +70,16 @@
               <div class="settings-section">
                 <h5>Ocean</h5>
                 <button id="ocean-color" type="color" value="#fffcfa"></button>
-                <label><input class="color-input" id="solid-color-text" type="text" value="#fffcfa"></label>
+                <label><input class="color-input" id="ocean-color-text" type="text" value="#fffcfa"></label>
               </div>
               <div class="settings-section">
-                <h5>Undersea lines</h5>
+                <h5>Undersea contours</h5>
                 <button id="ocean-line-color" type="color" value="#8c7556"></button>
-                <label><input class="color-input" id="line-color-text" type="text" value="#8c7556"></label>
+                <label><input class="color-input" id="ocean-line-color-text" type="text" value="#8c7556"></label>
               </div>
             </div>
             <div class="settings-section">
-              <label for="ocean-check"><input type="checkbox" checked=""> Use same colors below sea level</label>
+              <label for="ocean-check"><input type="checkbox" id="ocean-check" checked=""> Use same colors above and below sea level</label>
             </div>
             <div class="settings-section">
               <h5>Contour interval</h5>
@@ -160,9 +105,10 @@
             </div>
           </div>
           <div class="panel-footer">
-            <div class="ui right floated button">
-              Next <i class="right arrow icon"></i>
+             <div class="ui right floated icon button">
+              <i class="right arrow icon"></i>
             </div>
+            <p class="ui medium header left floated">Next: choose a map shape</p>
           </div>          
         </div>
 
