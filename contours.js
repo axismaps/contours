@@ -249,8 +249,7 @@ styleCards
   .append('div')
   .each(function (d) {
     var content = this;
-    d3.xml("thumbnail.svg").mimeType("image/svg+xml").get(function(error, xml) {
-      if (error) throw error;
+    d3.xml("thumbnail.svg").then(function(xml) {
       content.appendChild(xml.documentElement);
       d3.select(content).select('.land')
         .style('fill', styles[d].style.land.fill.fillStyle)

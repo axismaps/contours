@@ -1,0 +1,12 @@
+{
+  "name": "contours",
+  "version": "0.0.1",
+  "description": "contours poster generator",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "semantic-ui": "^2.3.3",
+    "d3": "5.7.0",
+    "jquery": "3.3.1"
+  }
+}
