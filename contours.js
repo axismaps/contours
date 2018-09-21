@@ -144,6 +144,16 @@ function updateGuides () {
 }
 
 window.onresize = function () {
+  if (shape !== 'full') {
+    var size = Math.min(d3.select('#map-container').node().offsetWidth, d3.select('#map-container').node().offsetHeight) - 40;
+    d3.select('#map')
+      .style('height', size + 'px')
+      .style('width', size + 'px');
+  } else {
+    d3.select('#map')
+      .style('height', '')
+      .style('width', '');
+  }
   mapNodeRect = d3.select('#map').node().getBoundingClientRect();
   width = mapNode.offsetWidth + 2*buffer;
   height = mapNode.offsetHeight + 2*buffer;
@@ -163,6 +173,16 @@ window.onresize = function () {
 
 $('#choose-style .panel-footer.options h3').click(function() {
   $('#choose-style .panel-footer.options').toggleClass('expanded');
+});
+
+$('.options-panel .next').click(function() {
+  $(this).parents('.options-panel').transition('fade right');
+  $(this).parents('.options-panel').next().transition('fade left');
+});
+
+$('.options-panel .prev').click(function() {
+  $(this).parents('.options-panel').transition('fade left');
+  $(this).parents('.options-panel').prev().transition('fade right');
 });
 
 $('#ocean-check').on('change', function(){
@@ -229,21 +249,21 @@ var styleCards = d3.select('#choose-style .panel-content .styles')
       if (style.options.indexInterval) indexInterval = style.options.indexInterval;
       else indexInterval = 0;
     }
-//d3.select('#' + this.id.replace('-text','')).node().picker.fromString(toHex(this.value));
-d3.select('#solid-color').node().picker.fromString(toHex(solidColor));
-$('#solid-color-text').val(toHex(solidColor));
+    //d3.select('#' + this.id.replace('-text','')).node().picker.fromString(toHex(this.value));
+    d3.select('#solid-color').node().picker.fromString(toHex(solidColor));
+    $('#solid-color-text').val(toHex(solidColor));
 
-d3.select('#line-color').node().picker.fromString(toHex(lineColor));
-$('#line-color-text').val(toHex(lineColor));
+    d3.select('#line-color').node().picker.fromString(toHex(lineColor));
+    $('#line-color-text').val(toHex(lineColor));
 
-d3.select('#ocean-color').node().picker.fromString(toHex(oceanColor));
-$('#ocean-color-text').val(toHex(oceanColor));
+    d3.select('#ocean-color').node().picker.fromString(toHex(oceanColor));
+    $('#ocean-color-text').val(toHex(oceanColor));
 
-d3.select('#ocean-line-color').node().picker.fromString(toHex(oceanLineColor));
-$('#ocean-line-color-text').val(toHex(oceanLineColor));
+    d3.select('#ocean-line-color').node().picker.fromString(toHex(oceanLineColor));
+    $('#ocean-line-color-text').val(toHex(oceanLineColor));
 
     drawContours();
-  })
+  });
 
 styleCards
   .append('div')
@@ -335,6 +355,15 @@ d3.select('#presets').on('change', function () {
   }
 
   drawContours();
+});
+
+d3.selectAll('#set-extent .card').on('click', function () {
+  var button = d3.select(this);
+  shape = button.classed('square') ? 'square' : (button.classed('circle') ? 'circle' : 'full');
+  d3.selectAll('#set-extent .card').classed('selected', false);
+  button.classed('selected', true);
+  $('#map').removeClass('square circle full').addClass(shape);
+  window.onresize();
 });
 
 d3.selectAll('.settings-row.shape input').on('change', function () {

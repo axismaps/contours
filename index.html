@@ -96,10 +96,9 @@
             </div>
           </div>
           <div class="panel-footer">
-             <div class="ui right floated icon button">
-              <i class="right arrow icon"></i>
+            <div class="ui right floated button next">
+              Map shape <i class="right arrow icon"></i>
             </div>
-            <p class="ui medium header left floated">Next: choose a map shape</p>
           </div>          
         </div>
 
@@ -108,7 +107,7 @@
           <div class="panel-content">
             <p>Choose a map frame shape below, then search and/or move the map on screen to the area you want to show.</p>
             <div class="ui link cards">
-              <div class="ui card selected square">
+              <div class="ui card square">
                 <div class="content">
                   <div class="center aligned header"><i class="square icon outline huge"></i></div>
                 </div>
@@ -117,7 +116,7 @@
                   <div class="description">The map will be cropped to a square inside each product's available space.</div>
                 </div>
               </div>
-              <div class="ui fluid card circle">
+              <div class="ui card circle">
                 <div class="content">
                   <div class="center aligned header"><i class="circle outline icon huge"></i></div>
                 </div>
@@ -126,7 +125,7 @@
                   <div class="description">The map will be cropped to a circle inside each product's available space.</div>
                 </div>
               </div>
-              <div class="ui fluid card full">
+              <div class="ui card selected full">
                 <div class="content">
                   <div class="center aligned header"><i class="expand arrows alternate icon huge"></i></div>
                 </div>
@@ -138,11 +137,31 @@
             </div>
           </div>
           <div class="panel-footer">
-            <div class="ui right floated button">
-              Next <i class="right arrow icon"></i>
+            <div class="ui left floated button prev">
+              <i class="left arrow icon"></i> Map style
+            </div>
+            <div class="ui right floated button next">
+              Map title <i class="right arrow icon"></i>
             </div>
           </div>      
         </div>
+
+        <div id="add-title" class="options-panel">
+          <h2 class="ui header">Add title</h2>
+          <div class="panel-content">
+            <p>Tiiitle</p>
+            
+          </div>
+          <div class="panel-footer">
+            <div class="ui left floated button prev">
+              <i class="left arrow icon"></i> Map shape
+            </div>
+            <div class="ui right floated button next">
+              Preview <i class="right arrow icon"></i>
+            </div>
+          </div>      
+        </div>
+
       </div>
 
       <div id='map-container' class="show">
@@ -157,7 +176,7 @@
       </div>
 
     </main>
-    <div class="ui mini four steps">
+    <div class="ui mini four steps" style="margin: 0">
       <div class="active step">
         <i class="tint icon"></i>
         <div class="content">

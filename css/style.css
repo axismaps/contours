@@ -7,9 +7,7 @@ html, body {
 
 #wrapper {
   position: relative;
-  display: flex;
   height: 100%;
-  flex-direction: column;
 }
 
 canvas {
@@ -21,11 +19,16 @@ canvas {
 main {
   display: flex;
   flex: 1;
+  height: calc(100% - 85px);
+  position: relative;
 }
 
 #map-container {
   flex: 1;
   overflow: hidden;
+  position: relative;
+  height: 100%;
+  display: flex;
 }
 
 #guides {
@@ -113,6 +116,7 @@ main {
   height: 100%;
   overflow: hidden;
   z-index: 1000;
+  margin: auto;
 }
 
 header {
@@ -429,8 +433,8 @@ div.disabled {
 
 #zoom-controls {
   position: absolute;
-  top: 50px;
-  left: 320px;
+  top: 15px;
+  left: 15px;
   z-index: 3000;
 }
 
@@ -452,7 +456,8 @@ div.disabled {
   box-sizing: border-box;
   flex-shrink: 0;
   overflow: hidden;
-  height: calc(100% - 100px);
+  height: 100%;
+  position: relative;
 }
 
 .options-panel {
@@ -461,6 +466,8 @@ div.disabled {
   height: 100%;
   box-sizing: border-box;
   padding-top: 15px;
+  position: absolute;
+  width: 100%;
 }
 
 .options-panel > * {
@@ -588,6 +595,14 @@ div.disabled {
   cursor: pointer;
 }
 
-#set-extent {
+#set-extent, #add-title {
   display: none;
+}
+
+#map.circle, #map.square {
+  border: 1px solid #999;
+}
+
+#map.circle {
+  border-radius: 50%;
 }
