@@ -31,7 +31,7 @@
 
 <body>
   <a id="axis-link" href="www.axismaps.com" target="_blank"><img src="https://www.axismaps.com/images/logo_small.png"></a>
-  <div id='wrapper'>
+  <div id='wrapper' class="init">
     <header>CONTOURS</header>
     <main>
       <div id="main-panels">
@@ -103,9 +103,8 @@
         </div>
 
         <div id="set-extent" class="options-panel">
-          <h2 class="ui header">Set map extent</h2>
+          <h2 class="ui header">Set map shape</h2>
           <div class="panel-content">
-            <p>Choose a map frame shape below, then search and/or move the map on screen to the area you want to show.</p>
             <div class="ui link cards">
               <div class="ui card square">
                 <div class="content">
@@ -173,6 +172,18 @@
           <button id="zoom-in"><i class="icon-plus"></i></button>
           <button id="zoom-out"><i class="icon-minus"></i></button>
         </div>
+        <div id="search-overlay">
+          <h1>Contour Map Generator</h1>
+          <p>Create a stylish elevation contour map, customize it, then turn it into a poster, a mug, or another fun product to enjoy every day!</p>
+          <h2>Where do you want to map?</h2>
+          <div class="ui icon input">
+            <input type="text" placeholder="Search for a place...">
+            <i class="inverted circular search link icon"></i>
+          </div>
+          <div id="search-results"></div>
+          <p></p>
+          <p class="explore"><span>Or explore a random cool place</span> <i class="arrow circle right icon"></i></p>
+        </div>
       </div>
 
     </main>
@@ -180,19 +191,19 @@
       <div class="active step">
         <i class="tint icon"></i>
         <div class="content">
-          <div class="title">Choose style</div>
+          <div class="title">Map style</div>
         </div>
       </div>
       <div class="step">
         <i class="map icon"></i>
         <div class="content">
-          <div class="title">Set map extent</div>
+          <div class="title">Map shape</div>
         </div>
       </div>
       <div class="step">
         <i class="font icon"></i>
         <div class="content">
-          <div class="title">Add title</div>
+          <div class="title">Map title</div>
         </div>
       </div>
       <div class="step">
@@ -338,7 +349,6 @@
     <div class="toggle" id="download-toggle" title="Download map or data"><i class="icon-download"></i></div>
     <div id="search">
       <input type="text" placeholder="Search for places..." />
-      <div id="search-results"></div>
     </div>
   </div>
   <div id="loading">Drawing contours...</div>

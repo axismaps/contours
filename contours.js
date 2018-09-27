@@ -171,6 +171,11 @@ window.onresize = function () {
   wait = setTimeout(getRelief,500);
 }
 
+$('p.explore').click(function () {
+  $('#wrapper').removeClass('init');
+  $('#search-results').appendTo('#search');
+});
+
 $('#choose-style .panel-footer.options h3').click(function() {
   $('#choose-style .panel-footer.options').toggleClass('expanded');
 });
@@ -460,11 +465,13 @@ d3.select('.map-label')
 //     .classed(this.value, true);
 // });
 
-d3.select('#interval-input').on('change', function () {
+d3.select('#interval-input').on('change input', function () {
   //console.log(this.value)
   if (intervals[+this.value] == interval) return;
   clearTimeout(wait);
   wait = setTimeout(function () { load(getContours) },500);
+}).on('input', function () {
+  $('.contour-label').html(intervals[+this.value]);
 });
 
 d3.selectAll('input[name="unit"]').on('change', function () {
@@ -706,7 +713,7 @@ d3.selectAll('.icon-left-open').on('click', function () {
 
 // short delay before searching after key press, so we don't send too many requests
 var searchtimer;
-d3.select('#search input').on('keyup', function () {
+d3.select('#search input, #search-overlay input').on('keyup', function () {
   if (d3.event.keyCode == 13) {
     if (d3.selectAll('.search-result').size()) {
       var d = d3.select('.search-result').datum();
@@ -715,6 +722,8 @@ d3.select('#search input').on('keyup', function () {
       d3.select('body').on('click.search', null);
       this.value = '';
       if (document.activeElement != document.body) document.activeElement.blur();
+      $('#wrapper').removeClass('init');
+      $('#search-results').appendTo('#search');
       return;
     }
   }
@@ -732,11 +741,13 @@ function search (val) {
     d3.select('body').on('click.search', null);
   }
   var geocodeURL = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(val) + '.json?language=en&types=place,locality,neighborhood,poi&access_token=' + L.mapbox.accessToken;
-  d3.json(geocodeURL, function (error, json) {
+  d3.json(geocodeURL).then(function (json) {
     if (json && json.features && json.features.length) {
       var restults = d3.select('#search-results').style('display', 'block')
         .selectAll('.search-result')
         .data(json.features, function (d) { return d.id });
+
+        console.log(json.features)
 
       restults.enter()
         .append('div')
@@ -752,6 +763,8 @@ function search (val) {
           d3.select('body').on('click.search', null);
           d3.select('#search input').node().value = '';
           if (document.activeElement != document.body) document.activeElement.blur();
+          $('#wrapper').removeClass('init');
+          $('#search-results').appendTo('#search');
         });
 
       restults.exit().remove();
@@ -991,6 +1004,8 @@ function getContours () {
   else min = d3.min(values);
 
   interval = intervals[+d3.select('#interval-input').node().value];
+  $('.contour-label').html(interval);
+
 
   /*
   if (max - min > 10000) {
