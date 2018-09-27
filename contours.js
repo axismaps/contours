@@ -713,7 +713,7 @@ d3.selectAll('.icon-left-open').on('click', function () {
 
 // short delay before searching after key press, so we don't send too many requests
 var searchtimer;
-d3.select('#search input, #search-overlay input').on('keyup', function () {
+d3.selectAll('#search input, #search-overlay input').on('keyup', function () {
   if (d3.event.keyCode == 13) {
     if (d3.selectAll('.search-result').size()) {
       var d = d3.select('.search-result').datum();
@@ -739,6 +739,7 @@ function search (val) {
     d3.select('#search-results').style('display', 'none')
       .selectAll('.search-result').remove();
     d3.select('body').on('click.search', null);
+    return;
   }
   var geocodeURL = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(val) + '.json?language=en&types=place,locality,neighborhood,poi&access_token=' + L.mapbox.accessToken;
   d3.json(geocodeURL).then(function (json) {
@@ -1002,6 +1003,10 @@ function getContours () {
   max = d3.max(values);
   if (belowZero.length < 100) min = d3.min(aboveZero);  // if there are very few values below zero, they're probably junk data. use only values >= 0
   else min = d3.min(values);
+
+  if (max - min > 5000) d3.select('#interval-input').attr('min', 4)
+  else if (max - min > 1000) d3.select('#interval-input').attr('min', 2)
+  else d3.select('#interval-input').attr('min', 0);
 
   interval = intervals[+d3.select('#interval-input').node().value];
   $('.contour-label').html(interval);
