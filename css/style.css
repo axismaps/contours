@@ -652,3 +652,43 @@ p.explore span{
 #search-overlay p.explore:hover {
   color: #ddd;
 }
+
+.title-thumb {
+  background-image: url(../title_icon.png);
+  background-size: cover;
+  background-repeat: no-repeat;
+  height: 104px;
+  width: 82px;
+  margin: 20px 10px 0 10px;
+  display: inline-flex;
+  flex-direction: column;
+  border: 1px solid #999;
+}
+
+.title-thumb.middle {
+  justify-content: center;
+}
+
+.title-thumb.bottom {
+  justify-content: flex-end;
+  background-position: 0 -20px;
+}
+
+.title-thumb.bottom.mask {
+  background-position: 0 0;
+}
+
+.title-thumb p {
+  text-align: center;
+  line-height: 20px;
+  color: #333;
+}
+
+.title-thumb.middle p {
+  text-shadow: 0 0 2px rgb(224, 221, 211), 0 0 2px rgb(224, 221, 211), 1px 1px 0 rgb(224, 221, 211), -1px -1px 0 rgb(224, 221, 211); 
+}
+
+.title-thumb.mask p {
+  background-color: rgba(224, 221, 211, .75);
+  text-shadow: none;
+}
