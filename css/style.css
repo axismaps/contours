@@ -595,7 +595,7 @@ div.disabled {
   cursor: pointer;
 }
 
-#set-extent, #add-title {
+#set-extent, #add-title, #preview {
   display: none;
 }
 

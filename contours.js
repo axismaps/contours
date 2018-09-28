@@ -115,6 +115,42 @@ maskColor.opacity = .75;
 var labelColor = lineColor;
 if (d3.hsl(solidColor).l < d3.hsl(lineColor).l) labelColor = solidColor;
 
+function getImageParams (){
+  var bbox = map.getBounds();
+  var params = {
+    title: $('#add-title input').val(),
+    bbox: [bbox.getWest(), bbox.getSouth(), bbox.getEast(), bbox.getNorth()],
+    zoom: map.getZoom(),
+    style: {
+      land: {
+        stroke: {
+          strokeStyle: lineColor,
+          lineWidth: 1
+        },
+        fill: {
+          type: 'solid',
+          fillStyle: solidColor
+        }
+      },
+      water: {
+        stroke: {
+          strokeStyle: oceanLineColor,
+          lineWidth: 1
+        },
+        fill: {
+          type: 'solid',
+          fillStyle: oceanColor
+        }
+      }
+    },
+    options: {
+      indexLines: true
+    }
+  }
+
+  return params;
+}
+
 
 function updateTextSizes () {
   titleSize = baseTitleSize * pageWidth / 710;
