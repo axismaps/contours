@@ -275,6 +275,11 @@ $('#choose-style .panel-footer.options h3').click(function() {
 $('.options-panel .next').click(function() {
   $(this).parents('.options-panel').transition('fade right');
   $(this).parents('.options-panel').next().transition('fade left');
+  if ($(this).parents('.options-panel').next().attr('id') == 'preview') {
+    /* render product previews in $('.product-thumbs') div? */
+    var params = getImageParams();
+    // send params to image generator
+  }
 });
 
 $('.options-panel .prev').click(function() {
