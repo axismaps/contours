@@ -31,9 +31,9 @@
 
 <body>
   <a id="axis-link" href="www.axismaps.com" target="_blank"><img src="https://www.axismaps.com/images/logo_small.png"></a>
-  <div id='wrapper' class="init">
+  <div id='wrapper'>
     <header>CONTOURS</header>
-    <main>
+    <main class="init">
       <div id="main-panels">
         <div id="choose-style" class="options-panel">
           <h2 class="ui header">Map style</h2>
@@ -148,15 +148,16 @@
         <div id="add-title" class="options-panel">
           <h2 class="ui header">Add title</h2>
           <div class="panel-content">
-            <p>Enter a map title below (optional)</p>
+            <p>If you'd like your map to have a title, enter it below. A short title is best—text size will be reduced for longer titles.</p>
             <div class="ui fluid input">
               <input type="text" placeholder="Map title">
             </div>
 
+            <p>Choose a title placement style.</p>
             <div>
               <div class="title-thumb middle"><p>Title</p></div>
               <div class="title-thumb middle mask"><p>Title</p></div>
-              <div class="title-thumb bottom"><p>Title</p></div>
+              <div class="title-thumb bottom selected"><p>Title</p></div>
               <div class="title-thumb bottom mask"><p>Title</p></div>
             </div>
 
@@ -176,7 +177,7 @@
 
       <div id='map-container' class="show">
         <div id="map"></div>
-        <div class="map-label"></div>
+        <div class="map-label bottom"></div>
         <div id="guides">
         </div>
         <div id="zoom-controls">
@@ -195,6 +196,10 @@
           <p></p>
           <p class="explore"><span>Or explore a random cool place</span> <i class="arrow circle right icon"></i></p>
         </div>
+      </div>
+
+      <div id="search">
+        <input type="text" placeholder="Search for places..." />
       </div>
 
     </main>
@@ -358,9 +363,7 @@
     </div>
     <div class="toggle show" id="settings-toggle" title="Edit style"><i class="icon-brush"></i></div>
     <div class="toggle" id="download-toggle" title="Download map or data"><i class="icon-download"></i></div>
-    <div id="search">
-      <input type="text" placeholder="Search for places..." />
-    </div>
+    
   </div>
   <div id="loading">Drawing contours...</div>
   <script src='styles.js'></script>

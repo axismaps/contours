@@ -110,6 +110,11 @@ var bathyColor = d3.scaleLinear()
 
 var contourSVG;
 
+var maskColor = d3.color(solidColor).rgb();
+maskColor.opacity = .75;
+var labelColor = lineColor;
+if (d3.hsl(solidColor).l < d3.hsl(lineColor).l) labelColor = solidColor;
+
 
 function updateTextSizes () {
   titleSize = baseTitleSize * pageWidth / 710;
@@ -149,10 +154,22 @@ window.onresize = function () {
     d3.select('#map')
       .style('height', size + 'px')
       .style('width', size + 'px');
+    if (d3.select('.map-label').classed('bottom mask')) {
+      d3.select('.map-label')
+        .style('bottom', .5*(d3.select('#map-container').node().offsetHeight - d3.select('#map').node().offsetHeight) + 'px');
+    } else if (d3.select('.map-label').classed('bottom')) {
+      d3.select('.map-label').style('bottom', 0)
+    }
+    $('.map-label')
+      .css('width', size + 'px')
+      .css('left', 'calc(50% - ' + size/2 + 'px)');
   } else {
     d3.select('#map')
       .style('height', '')
       .style('width', '');
+    $('.map-label')
+      .css('width', '100%')
+      .css('left', '0');
   }
   mapNodeRect = d3.select('#map').node().getBoundingClientRect();
   width = mapNode.offsetWidth + 2*buffer;
@@ -171,8 +188,47 @@ window.onresize = function () {
   wait = setTimeout(getRelief,500);
 }
 
+$('.title-thumb').click(function (){
+  $('.title-thumb.selected').removeClass('selected');
+  var thumb = $(this);
+  thumb.addClass('selected');
+  $('.map-label')
+    .toggleClass('mask', thumb.hasClass('mask'))
+    .toggleClass('bottom', thumb.hasClass('bottom'))
+    .toggleClass('middle', thumb.hasClass('middle'));
+
+  if (d3.select('.map-label').classed('bottom mask')) {
+    d3.select('.map-label')
+      .style('bottom', .5*(d3.select('#map-container').node().offsetHeight - d3.select('#map').node().offsetHeight) + 'px');
+  } else if (d3.select('.map-label').classed('bottom')) {
+    d3.select('.map-label').style('bottom', 0)
+  } else {
+    d3.select('.map-label').style('bottom', '');
+  }
+  $('.map-label').css('color', lineColor);
+  if ($('.map-label').hasClass('middle') && !$('.map-label').hasClass('mask'))
+    $('.map-label').css('text-shadow', '0 0 4px ' + solidColor + ', 0 0 4px ' + solidColor + ', 1px 1px 0 ' + solidColor + ', -1px -1px 0 ' + solidColor);
+  else 
+    $('.map-label').css('text-shadow', 'none');
+
+  if ($('.map-label').hasClass('mask')) {
+    $('.map-label').css('background-color', maskColor.toString());
+  } else {
+    $('.map-label').css('background-color', '');
+  }
+});
+$('.map-label').css('color', lineColor);
+
+$('#add-title input').on('keyup', function () {
+  if (this.value) {
+    $('.map-label').html(this.value).show();
+  } else {
+    $('.map-label').html('').hide();
+  }
+});
+
 $('p.explore').click(function () {
-  $('#wrapper').removeClass('init');
+  $('main').removeClass('init');
   $('#search-results').appendTo('#search');
 });
 
@@ -266,6 +322,24 @@ var styleCards = d3.select('#choose-style .panel-content .styles')
 
     d3.select('#ocean-line-color').node().picker.fromString(toHex(oceanLineColor));
     $('#ocean-line-color-text').val(toHex(oceanLineColor));
+
+    if ($('.map-label').hasClass('middle') && !$('.map-label').hasClass('mask'))
+      $('.map-label').css('text-shadow', '0 0 4px ' + solidColor + ', 0 0 4px ' + solidColor + ', 1px 1px 0 ' + solidColor + ', -1px -1px 0 ' + solidColor);
+    
+    maskColor = d3.color(solidColor).rgb();
+    maskColor.opacity = .75;
+
+    if ($('.map-label').hasClass('mask')) {
+      $('.map-label').css('background-color', maskColor.toString());
+    } else {
+      $('.map-label').css('background-color', '');
+    }
+
+    labelColor = lineColor;
+    if (d3.hsl(solidColor).l < d3.hsl(lineColor).l) labelColor = solidColor;
+
+    if ($('.map-label').hasClass('bottom') && !$('.map-label').hasClass('mask')) $('.map-label').css('color', labelColor);
+    else $('.map-label').css('color', lineColor);
 
     drawContours();
   });
@@ -368,6 +442,14 @@ d3.selectAll('#set-extent .card').on('click', function () {
   d3.selectAll('#set-extent .card').classed('selected', false);
   button.classed('selected', true);
   $('#map').removeClass('square circle full').addClass(shape);
+  if (shape == 'circle') {
+    $('.title-thumb.bottom.mask').addClass('disabled');
+    if ($('.title-thumb.bottom.mask').hasClass('selected')) {
+      $('.title-thumb.middle.mask').click();
+    }
+  } else {
+    $('.title-thumb.bottom.mask').removeClass('disabled');
+  }
   window.onresize();
 });
 
@@ -407,9 +489,6 @@ d3.select('#subtitle').on('keyup', function () {
   d3.select('#layout-subtitle').html(this.value).style('display', this.value ? 'block' : 'none');;
 });
 
-d3.select('#label').on('keyup', function () {
-  d3.select('.map-label').html(this.value).style('display', this.value ? 'block' : 'none');
-});
 
 d3.select('#title-color').on('change', function () {
   d3.select('#layout-title').style('color', d3.event.detail);
@@ -419,34 +498,11 @@ d3.select('#subtitle-color').on('change', function () {
   d3.select('#layout-subtitle').style('color', d3.event.detail);
 });
 
-d3.select('#label-color').on('change', function () {
-  d3.selectAll('.map-label').style('color', d3.event.detail);
-});
 
 d3.select('#layout-title').style('color', '#333');
 d3.select('#layout-subtitle').style('color', '#666');
 
 
-d3.select('.map-label')
-  .style('color', '#000')
-  .style('top', pageHeight/2 + 'px')
-  .style('left', pageWidth/2 + 'px')
-  .on('mousedown', function () {
-    var x0 = d3.event.pageX;
-    var y0 = d3.event.pageY;
-    var l0 = +d3.select(this).style('left').replace(/[a-z]/g, '');
-    var t0 = +d3.select(this).style('top').replace(/[a-z]/g, '');
-    d3.select('body')
-      .on('mousemove.label', function () {
-        d3.select('.map-label')
-          .style('top', (t0 + d3.event.pageY - y0) + 'px')
-          .style('left', (l0 + d3.event.pageX - x0) + 'px');
-      })
-      .on('mouseup.label mouseleave.label', function () {
-        d3.select('body')
-          .on('mousemove.label mouseup.label mouseleave.label', null);
-      })
-  });
 
 // d3.select('#fonts').selectAll('option.font')
 //   .data(fonts)
@@ -502,6 +558,11 @@ d3.select('#line-width').on('keyup', function () {
 d3.select('#line-color').on('change', function () {
   lineColor = d3.event.detail;
   indexLineColor = d3.event.detail;
+  labelColor = lineColor;
+  if (d3.hsl(solidColor).l < d3.hsl(lineColor).l) labelColor = solidColor;
+
+  if ($('.map-label').hasClass('bottom') && !$('.map-label').hasClass('mask')) $('.map-label').css('color', labelColor);
+  else $('.map-label').css('color', lineColor);
   clearTimeout(wait);
   wait = setTimeout(function () { load(drawContours) },500);
 });
@@ -565,6 +626,15 @@ d3.selectAll('input[name="bg"]').on('change', function () {
 
 d3.select('#solid-color').on('change', function () {
   solidColor = d3.event.detail;
+  if ($('.map-label').hasClass('middle') && !$('.map-label').hasClass('mask'))
+    $('.map-label').css('text-shadow', '0 0 4px ' + solidColor + ', 0 0 4px ' + solidColor + ', 1px 1px 0 ' + solidColor + ', -1px -1px 0 ' + solidColor);
+  maskColor = d3.color(solidColor).rgb();
+  maskColor.opacity = .75;
+  if ($('.map-label').hasClass('mask')) {
+    $('.map-label').css('background-color', maskColor.toString());
+  } else {
+    $('.map-label').css('background-color', '');
+  }
   clearTimeout(wait);
   wait = setTimeout(function () { load(drawContours) },500);
 });
@@ -722,7 +792,7 @@ d3.selectAll('#search input, #search-overlay input').on('keyup', function () {
       d3.select('body').on('click.search', null);
       this.value = '';
       if (document.activeElement != document.body) document.activeElement.blur();
-      $('#wrapper').removeClass('init');
+      $('main').removeClass('init');
       $('#search-results').appendTo('#search');
       return;
     }
@@ -764,7 +834,7 @@ function search (val) {
           d3.select('body').on('click.search', null);
           d3.select('#search input').node().value = '';
           if (document.activeElement != document.body) document.activeElement.blur();
-          $('#wrapper').removeClass('init');
+          $('main').removeClass('init');
           $('#search-results').appendTo('#search');
         });
 

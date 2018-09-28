@@ -99,14 +99,6 @@ main {
   display: none;
 }
 
-.map-label {
-  position: absolute;
-  font-size: 18px;
-  cursor: pointer;
-  user-select: none;
-  z-index: 2000;
-}
-
 .aspect-1 .layout-text, .shape-full .layout-text, .landscape .layout-text {
   display: none !important;
 }
@@ -663,6 +655,12 @@ p.explore span{
   display: inline-flex;
   flex-direction: column;
   border: 1px solid #999;
+  cursor: pointer;
+  outline: 2px solid white;
+}
+
+.title-thumb.selected {
+  outline: 2px solid #333;
 }
 
 .title-thumb.middle {
@@ -691,4 +689,31 @@ p.explore span{
 .title-thumb.mask p {
   background-color: rgba(224, 221, 211, .75);
   text-shadow: none;
+}
+
+.map-label {
+  position: absolute;
+  font-size: 32px;
+  line-height: 50px;
+  cursor: pointer;
+  user-select: none;
+  z-index: 4000;
+  text-align: center;
+  color: #333;
+  width: 100%;
+}
+
+.map-label.bottom {
+  bottom: 0;
+  background-color: white;
+  text-shadow: none;
+}
+
+.map-label.mask {
+  background-color: rgba(224, 221, 211, .75);
+  text-shadow: none;
+}
+
+.map-label.middle {
+  top: calc(50% - 25px);
 }
