@@ -423,7 +423,7 @@ The good stuff starts from here
 
 /* Set up the map*/
 
-L.mapbox.accessToken = 'pk.eyJ1IjoiYXdvb2RydWZmIiwiYSI6IktndnRPLU0ifQ.OMo9_1sJGjpSUNiJPBGA9A';
+L.mapbox.accessToken = 'pk.eyJ1IjoiYXhpc21hcHMiLCJhIjoieUlmVFRmRSJ9.CpIxovz1TUWe_ecNLFuHNg';
 
 var map = L.mapbox.map('map',null,{scrollWheelZoom: false});
 var hash = new L.Hash(map);
@@ -468,7 +468,7 @@ pane.appendChild(contourCanvas);
 
 // custom map pane for the labels
 var labelPane = map.createPane('labels');
-var referenceLayer = L.mapbox.styleLayer('mapbox://styles/awoodruff/cjggk1nwn000f2rjsi5x4iha1', {
+var referenceLayer = L.mapbox.styleLayer('mapbox://styles/axismaps/cjerbqqik91q82sp3dax1py3c', {
   minZoom: 0,
   maxZoom: 15,
   pane: 'labels',
