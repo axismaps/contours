@@ -148,7 +148,9 @@ export function useContourMap(settings: ContourSettings): ContourMap {
     };
 
     // Keep the latest settings reachable from the scheduled callbacks.
-    settingsRef.current = settings;
+    useEffect(() => {
+        settingsRef.current = settings;
+    }, [settings]);
 
     // Create the map once.
     useEffect(() => {

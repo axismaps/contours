@@ -18,6 +18,8 @@ interface AvatarCompanyIconProps {
 }
 
 export const AvatarCompanyIcon = ({ size, src, alt }: AvatarCompanyIconProps) => (
+    // Company icons come from arbitrary URLs, which next/image can't optimize without a remote pattern per host.
+    // eslint-disable-next-line @next/next/no-img-element
     <img
         src={src}
         alt={alt}

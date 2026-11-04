@@ -112,6 +112,8 @@ export const Avatar = ({
 
     const renderMainContent = () => {
         if (canShowImage) {
+            // Avatars come from arbitrary URLs, which next/image can't optimize without a remote pattern per host.
+            // eslint-disable-next-line @next/next/no-img-element
             return <img data-avatar-img className="size-full object-cover" src={src} alt={alt} onError={() => setIsFailed(true)} />;
         }
 
