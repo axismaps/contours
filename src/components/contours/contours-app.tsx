@@ -40,7 +40,7 @@ export const ContoursApp = () => {
                 <ToolRail active={panel} onToggle={togglePanel} />
 
                 <div className="relative min-w-0 flex-1">
-                    <MapView containerRef={map.containerRef} isDrawing={map.isDrawing} />
+                    <MapView containerRef={map.containerRef} isDrawing={map.isDrawing} problem={map.problem} />
 
                     <SidePanel id="style" title="Style" description="Interval, lines, tints and labels." isOpen={panel === "style"} onClose={closePanel}>
                         <StylePanel settings={settings} onChange={updateSettings} hasBathymetry={map.hasBathymetry} />
