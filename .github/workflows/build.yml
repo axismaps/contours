@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          # Public Mapbox token for the place search. Without it the build still
+          # passes; the exported site just has search disabled.
+          NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+
+      # The static export, ready to copy to any file host. No deploy step yet:
+      # the hosting target isn't decided.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: out/
+          if-no-files-found: error
