@@ -158,13 +158,20 @@ d3.select('#shadow-width').on('keyup', function () {
   wait = setTimeout(function () { load(drawContours) },500);
 });
 
+function syncPanelState () {
+  var open = d3.select('#settings').classed('show') || d3.select('#download').classed('show');
+  d3.select('#wrapper').classed('panel-open', open);
+  d3.select('#settings-toggle').attr('aria-expanded', d3.select('#settings').classed('show'));
+  d3.select('#download-toggle').attr('aria-expanded', d3.select('#download').classed('show'));
+}
+
 d3.select('#settings-toggle').on('click', function () {
   d3.select('#settings').classed('show', !d3.select('#settings').classed('show'));
   d3.select(this).classed('show', !d3.select(this).classed('show'));
   if (d3.select('#settings').classed('show')) {
     d3.selectAll('#download, #download-toggle').classed('show', false);
   }
-  d3.select('#wrapper').classed('panel-open', d3.select('#settings').classed('show') || d3.select('#download').classed('show'));
+  syncPanelState();
 });
 
 d3.select('#download-toggle').on('click', function () {
@@ -173,7 +180,7 @@ d3.select('#download-toggle').on('click', function () {
   if (d3.select('#download').classed('show')) {
     d3.selectAll('#settings, #settings-toggle').classed('show', false);
   }
-  d3.select('#wrapper').classed('panel-open', d3.select('#settings').classed('show') || d3.select('#download').classed('show'));
+  syncPanelState();
 });
 
 d3.selectAll('input[name="bg"]').on('change', function () {
@@ -317,18 +324,18 @@ d3.selectAll('.color-input').on('change', function () {
   wait = setTimeout(function () { load(drawContours) },500);
 })
 
-d3.select('input[type="checkbox"]').on('change', function () {
-  if (this.checked) referenceLayer.setOpacity(1);
-  else referenceLayer.setOpacity(0);
+d3.select('#show-labels').on('change', function () {
+  if (this.checked) map.addLayer(referenceLayer);
+  else map.removeLayer(referenceLayer);
 });
 
 d3.select('#download-geojson').on('click', downloadGeoJson);
 d3.select('#download-png').on('click', downloadPNG);
 d3.select('#download-svg').on('click', downloadSVG);
 
-d3.selectAll('.icon-left-open').on('click', function () {
+d3.selectAll('.panel-close').on('click', function () {
   d3.selectAll('.show').classed('show', false);
-  d3.select('#wrapper').classed('panel-open', false);
+  syncPanelState();
 });
 
 // short delay before searching after key press, so we don't send too many requests
@@ -358,7 +365,7 @@ function search (val) {
       .selectAll('.search-result').remove();
     d3.select('body').on('click.search', null);
   }
-  var geocodeURL = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(val) + '.json?language=en&types=place,locality,neighborhood,poi&access_token=' + L.mapbox.accessToken;
+  var geocodeURL = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(val) + '.json?language=en&types=place,locality,neighborhood,poi&access_token=' + mapboxAccessToken;
   d3.json(geocodeURL, function (error, json) {
     if (json && json.features && json.features.length) {
       var restults = d3.select('#search-results').style('display', 'block')
@@ -423,11 +430,23 @@ The good stuff starts from here
 
 /* Set up the map*/
 
-L.mapbox.accessToken = 'pk.eyJ1IjoiYXhpc21hcHMiLCJhIjoieUlmVFRmRSJ9.CpIxovz1TUWe_ecNLFuHNg';
+// open the style panel on first load so the controls are discoverable (not on small screens, where it covers the map)
+if (window.matchMedia('(min-width: 720px)').matches) {
+  d3.selectAll('#settings, #settings-toggle').classed('show', true);
+}
+syncPanelState();
 
-var map = L.mapbox.map('map',null,{scrollWheelZoom: false});
+// Mapbox token is only used for the place search (geocoding)
+var mapboxAccessToken = 'pk.eyJ1IjoiYXhpc21hcHMiLCJhIjoieUlmVFRmRSJ9.CpIxovz1TUWe_ecNLFuHNg';
+
+var map = L.map('map', {
+  scrollWheelZoom: false,
+  zoomControl: false,
+  maxZoom: 15 // elevation tiles only go to zoom 15
+});
+L.control.zoom({ position: 'topright' }).addTo(map);
 var hash = new L.Hash(map);
-map.setView(map_start_location.slice(0, 3), map_start_location[2]);
+map.setView(map_start_location.slice(0, 2), map_start_location[2]);
 
 map.on('moveend', function() {
   // on move end we redraw the contour layer, so clear some stuff
@@ -456,23 +475,42 @@ var CanvasLayer = L.GridLayer.extend({
         clearTimeout(wait);
         wait = setTimeout(getRelief,500); // only draw after a reasonable delay, so that we don't redraw on every single tile load
       }
-      img.src = 'https://elevation-tiles-prod.s3.amazonaws.com/terrarium/'+coords.z+'/'+coords.x+'/'+coords.y+'.png'
+      img.onerror = function () {
+        // a missing tile shouldn't stall the redraw
+        clearTimeout(wait);
+        wait = setTimeout(getRelief,500);
+      }
+      img.src = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/'+coords.z+'/'+coords.x+'/'+coords.y+'.png'
       return tile;
   }
 });
-var demLayer = new CanvasLayer({attribution: '<a href="https://aws.amazon.com/public-datasets/terrain/">Elevation tiles</a> by Mapzen'}).addTo(map);
+var demLayer = new CanvasLayer({attribution: 'Elevation: <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (Mapzen / AWS)'}).addTo(map);
 
 // custom map pane for the contours, above other layers
 var pane = map.createPane('contour');
+pane.style.zIndex = 400;
 pane.appendChild(contourCanvas);
 
-// custom map pane for the labels
+// custom map pane for the reference labels, above the contours
 var labelPane = map.createPane('labels');
-var referenceLayer = L.tileLayer('http://tile.stamen.com/toner-labels/{z}/{x}/{y}.png', {
+labelPane.style.zIndex = 450;
+labelPane.style.pointerEvents = 'none';
+// Stamen's tile server shut down in 2023 (and CARTO's free tiles now need a key), so the
+// reference layer is Esri's keyless road + place-label overlays, which also brings roads back.
+var esriAttribution = 'Roads &amp; labels &copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, OpenStreetMap contributors';
+var roadsLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
   minZoom: 0,
   maxZoom: 15,
   pane: 'labels',
-}).addTo(map);
+  opacity: 0.5,
+  attribution: esriAttribution
+});
+var placesLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+  minZoom: 0,
+  maxZoom: 15,
+  pane: 'labels'
+});
+var referenceLayer = L.layerGroup([roadsLayer, placesLayer]).addTo(map);
 reverseTransform();
 
 // this resets our canvas back to top left of the window after panning the map
@@ -497,9 +535,12 @@ function getRelief(){
     reverseTransform();
 
     // reset DEM data by drawing elevation tiles to it
+    var mapRect = mapNode.getBoundingClientRect();
     for (var t in demLayer._tiles) {
+      var img = demLayer._tiles[t].el.img;
+      if (!img || !img.complete || !img.naturalWidth) continue; // not loaded (or failed), skip it
       var rect = demLayer._tiles[t].el.getBoundingClientRect();
-      demContext.drawImage(demLayer._tiles[t].el.img,rect.left + buffer,rect.top + buffer);
+      demContext.drawImage(img, rect.left - mapRect.left + buffer, rect.top - mapRect.top + buffer);
     }
     demImageData = demContext.getImageData(0,0,width,height);
     demData = demImageData.data;
