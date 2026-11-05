@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </head>
             <body className={cx(inter.variable, "overflow-hidden bg-primary antialiased")}>
                 <RouteProvider>{children}</RouteProvider>
+                <Analytics />
             </body>
         </html>
     );
