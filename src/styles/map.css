@@ -1,0 +1,77 @@
+/* Leaflet chrome, restyled with the design tokens. */
+
+.leaflet-container {
+    background: var(--color-bg-primary);
+    font-family: var(--font-body);
+}
+
+canvas#contours {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.leaflet-top {
+    top: calc(var(--spacing) * 4);
+}
+.leaflet-right {
+    right: calc(var(--spacing) * 4);
+}
+.leaflet-top .leaflet-control {
+    margin: 0;
+}
+
+/* Zoom control as a vertical button group. */
+.leaflet-bar {
+    border: 0 !important;
+    border-radius: var(--radius-lg) !important;
+    overflow: hidden;
+    background: var(--color-bg-primary);
+    box-shadow:
+        var(--shadow-xs),
+        0 0 0 1px var(--color-border-primary) !important;
+}
+.leaflet-bar a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    color: var(--color-fg-quaternary) !important;
+    background: var(--color-bg-primary) !important;
+    border-bottom: 1px solid var(--color-border-secondary) !important;
+    font-weight: 500;
+    transition:
+        background-color 100ms linear,
+        color 100ms linear;
+}
+.leaflet-bar a:last-child {
+    border-bottom: 0 !important;
+}
+.leaflet-bar a:hover {
+    color: var(--color-fg-quaternary_hover) !important;
+    background: var(--color-bg-primary_hover) !important;
+}
+.leaflet-bar a:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: -2px;
+}
+.leaflet-bar a.leaflet-disabled {
+    opacity: 0.5;
+}
+
+.leaflet-control-attribution {
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary) !important;
+    background: color-mix(in srgb, var(--color-bg-primary) 85%, transparent) !important;
+    padding: 2px 8px !important;
+    border-top-left-radius: var(--radius-md);
+}
+.leaflet-control-attribution a {
+    color: var(--color-text-secondary) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .leaflet-zoom-anim .leaflet-zoom-animated {
+        transition: none;
+    }
+}
