@@ -46,6 +46,8 @@ export interface ContourMap {
     problem: ContourProblem | null;
     /** True when the current view contains elevations below sea level. */
     hasBathymetry: boolean;
+    /** True while contours for the current view are on screen and can be exported. */
+    hasContours: boolean;
     actions: ContourMapActions;
 }
 
@@ -80,6 +82,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
 
     const [isDrawing, setIsDrawing] = useState(false);
     const [bathymetry, setBathymetry] = useState(false);
+    const [hasContours, setHasContours] = useState(false);
     const [problem, setProblem] = useState<ContourProblem | null>(null);
 
     const gridSize = () => {
@@ -112,9 +115,19 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         if (timerRef.current === null && inFlightRef.current === 0) setIsDrawing(false);
     };
 
-    const applyResult = (result: ContourResult) => {
-        dataRef.current = result.status === "ok" ? result.data : null;
+    /** The contours on screen no longer match the view; drop them so they can't be exported. */
+    const invalidateData = () => {
+        dataRef.current = null;
+        setHasContours(false);
+    };
+
+    const applyResult = (result: ContourResult, viewChanged: boolean) => {
+        if (result.status === "ok") dataRef.current = result.data;
+        // A failed recompute of the same view (say, an interval that is too fine) keeps
+        // the last good contours on screen; a failure after a move has nothing to keep.
+        else if (result.status === "empty" || viewChanged) dataRef.current = null;
         setProblem(result.status === "failed" ? result.problem : null);
+        setHasContours(dataRef.current !== null);
         setBathymetry(dataRef.current ? hasBathymetry(dataRef.current) : false);
         draw();
     };
@@ -140,6 +153,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         const worker = workerRef.current;
         if (!worker) return;
         const generation = generationRef.current;
+        const viewChanged = grid !== null;
         const { interval, unit } = settingsRef.current;
         inFlightRef.current++;
         worker
@@ -148,12 +162,12 @@ export function useContourMap(settings: ContourSettings): ContourMap {
                 (result) => {
                     // The map moved (or unmounted) while this was computing; its result belongs to the old view.
                     if (generation !== generationRef.current || !mapRef.current) return;
-                    applyResult(result);
+                    applyResult(result, viewChanged);
                 },
                 (error: unknown) => {
                     if (generation !== generationRef.current || !mapRef.current) return;
                     console.error("Contour computation failed", error);
-                    applyResult({ status: "empty" });
+                    applyResult({ status: "empty" }, viewChanged);
                 },
             )
             .finally(() => {
@@ -274,11 +288,13 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         map.on("moveend", () => {
             // Clear right away; stale contours sliding around are worse than a blank map.
             contourCanvas.getContext("2d")?.clearRect(0, 0, contourCanvas.width, contourCanvas.height);
+            invalidateData();
             syncHash();
             schedule(Work.Relief);
         });
         map.on("resize", () => {
             resizeCanvases();
+            invalidateData();
             schedule(Work.Relief);
         });
         window.addEventListener("hashchange", onHashChange);
@@ -370,5 +386,5 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         [setView, fitBounds, downloadGeoJson, downloadPng, downloadSvg],
     );
 
-    return { containerRef, isDrawing, problem, hasBathymetry: bathymetry, actions };
+    return { containerRef, isDrawing, problem, hasBathymetry: bathymetry, hasContours, actions };
 }

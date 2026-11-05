@@ -57,6 +57,7 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
                         value={settings.interval}
                         onChange={(interval) => onChange({ interval })}
                         min={Number.MIN_VALUE}
+                        commitOn="blur"
                         className="flex-1"
                     />
                     <ButtonGroup
