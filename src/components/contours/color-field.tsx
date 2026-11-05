@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     Button as AriaButton,
     ColorSwatch as AriaColorSwatch,
@@ -28,10 +28,13 @@ interface ColorFieldProps {
  */
 export const ColorField = ({ label, value, onChange, className }: ColorFieldProps) => {
     const [draft, setDraft] = useState(value);
+    const [lastValue, setLastValue] = useState(value);
 
-    useEffect(() => {
-        setDraft((current) => (normalizeHex(current) === value ? current : value));
-    }, [value]);
+    // Adopt a new value from outside (the picker, or a reset) unless the draft already spells it.
+    if (value !== lastValue) {
+        setLastValue(value);
+        if (normalizeHex(draft) !== value) setDraft(value);
+    }
 
     const swatch = (
         <AriaDialogTrigger>

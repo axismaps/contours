@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Input, InputBase } from "@/components/base/input/input";
 import { InputGroup } from "@/components/base/input/input-group";
 
@@ -22,10 +22,13 @@ interface NumberFieldProps {
  */
 export const NumberField = ({ label, value, onChange, min = 0, suffix, isDisabled, className }: NumberFieldProps) => {
     const [draft, setDraft] = useState(String(value));
+    const [lastValue, setLastValue] = useState(value);
 
-    useEffect(() => {
-        setDraft((current) => (Number(current) === value ? current : String(value)));
-    }, [value]);
+    // Adopt a new value from outside unless the draft already parses to it (so "1." isn't clobbered mid-keystroke).
+    if (value !== lastValue) {
+        setLastValue(value);
+        if (Number(draft) !== value) setDraft(String(value));
+    }
 
     const parse = (text: string) => {
         const n = Number(text.trim());

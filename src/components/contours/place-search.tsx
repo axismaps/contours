@@ -20,13 +20,17 @@ export const PlaceSearch = ({ onSelect }: PlaceSearchProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const trimmed = query.trim();
-        if (trimmed.length < 2 || !MAPBOX_TOKEN) {
+    const updateQuery = (text: string) => {
+        setQuery(text);
+        if (text.trim().length < 2) {
             setResults([]);
             setIsOpen(false);
-            return;
         }
+    };
+
+    useEffect(() => {
+        const trimmed = query.trim();
+        if (trimmed.length < 2 || !MAPBOX_TOKEN) return;
         const controller = new AbortController();
         const timer = window.setTimeout(async () => {
             try {
@@ -62,7 +66,7 @@ export const PlaceSearch = ({ onSelect }: PlaceSearchProps) => {
             aria-label="Search for a place"
             items={results}
             inputValue={query}
-            onInputChange={setQuery}
+            onInputChange={updateQuery}
             selectedKey={null}
             onSelectionChange={(key) => choose(results.find((r) => r.id === key))}
             allowsEmptyCollection
