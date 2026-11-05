@@ -4,10 +4,15 @@ import type { ContourSettings, MapPosition } from "./types";
 export const TERRARIUM_TILE_URL = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
 export const TERRARIUM_ATTRIBUTION = 'Elevation: <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (Mapzen / AWS)';
 
-/** Esri's keyless reference overlays: roads, then boundaries and place labels. */
+/** Esri's keyless reference overlays: shaded relief under the contours, roads and light gray place labels on top. */
+export const ESRI_HILLSHADE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}";
 export const ESRI_ROADS_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
-export const ESRI_PLACES_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
-export const ESRI_ATTRIBUTION = 'Roads &amp; labels &copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, OpenStreetMap contributors';
+export const ESRI_LABELS_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
+export const ESRI_ATTRIBUTION =
+    'Hillshade, roads &amp; labels &copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, USGS, NASA, OpenStreetMap contributors';
+
+/** The hillshade is multiplied over the contours, so it only needs to be faint. */
+export const HILLSHADE_OPACITY = 0.65;
 
 export const MAX_ZOOM = 15;
 
@@ -22,6 +27,8 @@ export const MAX_THRESHOLDS = 2000;
 
 /** Wait this long after the last move, tile load or setting change before recomputing. */
 export const REDRAW_DELAY_MS = 500;
+/** Leaflet waits this long after the last wheel tick before zooming, so one long scroll is one zoom. */
+export const WHEEL_DEBOUNCE_MS = 80;
 export const SEARCH_DELAY_MS = 250;
 
 export const METERS_TO_FEET = 3.28084;
@@ -44,6 +51,7 @@ export const EXAMPLE_LOCATIONS: ReadonlyArray<{ name: string } & MapPosition> = 
 export const randomExampleLocation = (): MapPosition => EXAMPLE_LOCATIONS[Math.floor(Math.random() * EXAMPLE_LOCATIONS.length)];
 
 export const DEFAULT_SETTINGS: ContourSettings = {
+    showHillshade: true,
     showLabels: true,
     mapType: "lines",
     interval: 500,
@@ -58,7 +66,7 @@ export const DEFAULT_SETTINGS: ContourSettings = {
     shadowColor: "#5b5143",
     shadowWidth: 2,
 
-    background: "none",
+    background: "hypso",
     solidColor: "#fffcfa",
     hypsoLowColor: "#79a483",
     hypsoHighColor: "#ffdecb",

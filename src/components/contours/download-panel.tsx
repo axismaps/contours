@@ -15,7 +15,7 @@ export const DownloadPanel = ({ actions }: { actions: ContourMapActions }) => {
         <>
             <div className="mx-5 mb-5 flex gap-3 rounded-xl bg-secondary p-4 ring-1 ring-secondary ring-inset">
                 <InfoCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-fg-quaternary" />
-                <p className="text-sm text-secondary">Roads and labels only help you find your area. They are not included in any download.</p>
+                <p className="text-sm text-secondary">The hillshade, roads and labels only help you find your area. They are not included in any download.</p>
             </div>
 
             <PanelSection

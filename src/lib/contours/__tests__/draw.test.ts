@@ -120,7 +120,7 @@ describe("contoursToSvg", () => {
     it("uses the index line width on index contours in lines mode", () => {
         const svg = contoursToSvg(
             land,
-            makeSettings({ mapType: "lines", indexEvery: 2, interval: 100, lineWidth: 0.75, indexLineWidth: 1.5, lineColor: "#8c7556" }),
+            makeSettings({ mapType: "lines", background: "none", indexEvery: 2, interval: 100, lineWidth: 0.75, indexLineWidth: 1.5, lineColor: "#8c7556" }),
             5,
         );
         const widths = Object.fromEntries(paths(svg).map((p) => [attr(p, "id"), attr(p, "stroke-width")]));

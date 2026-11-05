@@ -8,6 +8,9 @@ export type IndexEvery = 0 | 2 | 5 | 10;
 
 /** Everything the user can change in the Style panel. */
 export interface ContourSettings {
+    /** Shaded relief under the contours, as a guide; never exported. */
+    showHillshade: boolean;
+    /** Roads and place labels over the contours, as a guide; never exported. */
     showLabels: boolean;
     mapType: MapType;
     /** Contour interval in `unit`. */

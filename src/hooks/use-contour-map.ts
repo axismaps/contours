@@ -2,7 +2,18 @@
 
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { CANVAS_BUFFER, ESRI_ATTRIBUTION, ESRI_PLACES_URL, ESRI_ROADS_URL, MAX_ZOOM, REDRAW_DELAY_MS, randomExampleLocation } from "@/lib/contours/constants";
+import {
+    CANVAS_BUFFER,
+    ESRI_ATTRIBUTION,
+    ESRI_HILLSHADE_URL,
+    ESRI_LABELS_URL,
+    ESRI_ROADS_URL,
+    HILLSHADE_OPACITY,
+    MAX_ZOOM,
+    REDRAW_DELAY_MS,
+    WHEEL_DEBOUNCE_MS,
+    randomExampleLocation,
+} from "@/lib/contours/constants";
 import { ContourWorkerClient } from "@/lib/contours/contour-client";
 import { contoursToSvg, drawContours, hasBathymetry } from "@/lib/contours/draw";
 import { canvasToPngBlob, contoursToGeoJson, downloadBlob, downloadText } from "@/lib/contours/export";
@@ -51,6 +62,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<L.Map | null>(null);
     const demLayerRef = useRef<TerrariumLayer | null>(null);
+    const hillshadeLayerRef = useRef<L.TileLayer | null>(null);
     const referenceLayerRef = useRef<L.LayerGroup | null>(null);
     const contourCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const demCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -194,7 +206,8 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         const container = containerRef.current;
         if (!container || mapRef.current) return;
 
-        const map = L.map(container, { scrollWheelZoom: false, zoomControl: false, maxZoom: MAX_ZOOM });
+        // Whole zoom levels only: the elevation layer rasterizes the tiles of the map's exact zoom, so a fractional zoom would yield no contours.
+        const map = L.map(container, { zoomControl: false, maxZoom: MAX_ZOOM, zoomSnap: 1, wheelDebounceTime: WHEEL_DEBOUNCE_MS });
         mapRef.current = map;
         workerRef.current = new ContourWorkerClient();
         L.control.zoom({ position: "topright" }).addTo(map);
@@ -214,12 +227,23 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         contourCanvasRef.current = contourCanvas;
         demCanvasRef.current = document.createElement("canvas");
 
+        // Shaded relief sits above the contour canvas and is multiplied into it, so it
+        // shades the fills instead of being hidden by them. Blending happens on screen
+        // only; the exports read the contour canvas alone.
+        const hillshadePane = map.createPane("hillshade");
+        hillshadePane.style.zIndex = "420";
+        hillshadePane.style.pointerEvents = "none";
+        hillshadePane.style.mixBlendMode = "multiply";
+        const hillshade = L.tileLayer(ESRI_HILLSHADE_URL, { maxZoom: MAX_ZOOM, pane: "hillshade", opacity: HILLSHADE_OPACITY, attribution: ESRI_ATTRIBUTION });
+        hillshadeLayerRef.current = hillshade;
+        if (settingsRef.current.showHillshade) hillshade.addTo(map);
+
         const labelPane = map.createPane("labels");
         labelPane.style.zIndex = "450";
         labelPane.style.pointerEvents = "none";
         const roads = L.tileLayer(ESRI_ROADS_URL, { maxZoom: MAX_ZOOM, pane: "labels", opacity: 0.5, attribution: ESRI_ATTRIBUTION });
-        const places = L.tileLayer(ESRI_PLACES_URL, { maxZoom: MAX_ZOOM, pane: "labels" });
-        const referenceLayer = L.layerGroup([roads, places]);
+        const labels = L.tileLayer(ESRI_LABELS_URL, { maxZoom: MAX_ZOOM, pane: "labels" });
+        const referenceLayer = L.layerGroup([roads, labels]);
         referenceLayerRef.current = referenceLayer;
         if (settingsRef.current.showLabels) referenceLayer.addTo(map);
 
@@ -274,6 +298,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
             map.remove();
             mapRef.current = null;
             demLayerRef.current = null;
+            hillshadeLayerRef.current = null;
             referenceLayerRef.current = null;
             contourCanvasRef.current = null;
             demCanvasRef.current = null;
@@ -290,6 +315,11 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         if (!previous) return;
 
         const map = mapRef.current;
+        const hillshadeLayer = hillshadeLayerRef.current;
+        if (map && hillshadeLayer && previous.showHillshade !== settings.showHillshade) {
+            if (settings.showHillshade) hillshadeLayer.addTo(map);
+            else hillshadeLayer.removeFrom(map);
+        }
         const referenceLayer = referenceLayerRef.current;
         if (map && referenceLayer && previous.showLabels !== settings.showLabels) {
             if (settings.showLabels) referenceLayer.addTo(map);

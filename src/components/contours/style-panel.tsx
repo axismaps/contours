@@ -25,12 +25,19 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
 
     return (
         <>
-            <PanelSection title="Reference">
+            <PanelSection title="Reference" description="Guides for finding your area. Never included in downloads.">
+                <Toggle
+                    size="sm"
+                    className="w-full [&>div:first-of-type]:shrink-0"
+                    label="Show hillshade"
+                    hint="Shaded relief under the contours."
+                    isSelected={settings.showHillshade}
+                    onChange={(showHillshade) => onChange({ showHillshade })}
+                />
                 <Toggle
                     size="sm"
                     className="w-full [&>div:first-of-type]:shrink-0"
                     label="Show roads and labels"
-                    hint="A guide for finding your area. Never included in downloads."
                     isSelected={settings.showLabels}
                     onChange={(showLabels) => onChange({ showLabels })}
                 />
