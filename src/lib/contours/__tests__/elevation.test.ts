@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeElevationGrid, terrariumToMeters } from "../elevation";
+import { NO_DATA, decodeElevationGrid, isNoData, terrariumToMeters } from "../elevation";
 
 describe("terrariumToMeters", () => {
     it("decodes sea level and the extremes of the encoding", () => {
@@ -35,9 +35,9 @@ describe("decodeElevationGrid", () => {
         [162, 144, 0],
     ]);
 
-    it("returns a row-major Int32Array of rounded metres", () => {
+    it("returns a row-major Float32Array of rounded metres", () => {
         const grid = decodeElevationGrid(pixels, 2, 2, "m");
-        expect(grid).toBeInstanceOf(Int32Array);
+        expect(grid).toBeInstanceOf(Float32Array);
         expect(grid).toHaveLength(4);
         expect(Array.from(grid)).toEqual([1, 10, -10, 8848]);
     });
@@ -47,7 +47,16 @@ describe("decodeElevationGrid", () => {
         expect(Array.from(grid)).toEqual([2, 33, -33, 29029]);
     });
 
-    it("ignores the alpha channel and lays rows out as x + y * width", () => {
+    it("treats fully transparent pixels as no-data", () => {
+        const withHole = new Uint8ClampedArray(pixels);
+        withHole[1 * 4 + 3] = 0;
+        const grid = decodeElevationGrid(withHole, 2, 2, "m");
+        expect(isNoData(grid[1])).toBe(true);
+        expect(Number.isNaN(NO_DATA)).toBe(true);
+        expect(Array.from(grid).filter((v) => !isNoData(v))).toEqual([1, -10, 8848]);
+    });
+
+    it("ignores partial alpha and lays rows out as x + y * width", () => {
         const wide = rgba([
             [128, 1, 0],
             [128, 2, 0],

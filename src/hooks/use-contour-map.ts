@@ -265,6 +265,8 @@ export function useContourMap(settings: ContourSettings): ContourMap {
 
         return () => {
             cancelPending();
+            // A counter, not a DOM node: bumping it here is what drops results that arrive after unmount.
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             generationRef.current++;
             window.removeEventListener("hashchange", onHashChange);
             workerRef.current?.terminate();
