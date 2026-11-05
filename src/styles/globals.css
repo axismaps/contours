@@ -60,3 +60,16 @@ input[type="number"] {
 input[type="search"]::-webkit-search-cancel-button {
     -webkit-appearance: none;
 }
+
+/*
+ * iOS Safari zooms the page when a focused field's text is under 16px, and this
+ * fixed-height app can't scroll back out of it. Unlayered, so it beats the
+ * size utilities on the fields.
+ */
+@media (max-width: 719px) and (pointer: coarse) {
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}

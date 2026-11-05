@@ -48,7 +48,10 @@ export const DownloadPanel = ({ actions, hasContours, isDrawing }: DownloadPanel
                 </Button>
             </PanelSection>
 
-            <PanelSection title="PNG image" description="A raster image of the map at screen size, with your chosen styles.">
+            <PanelSection
+                title="PNG image"
+                description="A raster image with your chosen styles at twice the on-screen size, or your display's pixel density if that is higher. Transparent wherever nothing is filled."
+            >
                 <Button
                     color="secondary"
                     size="md"

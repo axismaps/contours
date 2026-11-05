@@ -5,6 +5,7 @@ import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-b
 import { Select } from "@/components/base/select/select";
 import { Toggle } from "@/components/base/toggle/toggle";
 import { BLOG_POST_URL } from "@/lib/contours/constants";
+import { convertInterval } from "@/lib/contours/interval";
 import type { BackgroundType, BathymetryType, ContourSettings, IndexEvery, MapType, Unit } from "@/lib/contours/types";
 import { ColorField } from "./color-field";
 import { NumberField } from "./number-field";
@@ -67,7 +68,9 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
                         disallowEmptySelection
                         onSelectionChange={(keys) => {
                             const unit = [...keys][0];
-                            if (unit === "m" || unit === "ft") onChange({ unit: unit as Unit });
+                            if (unit !== "m" && unit !== "ft") return;
+                            // Keep roughly the same line density rather than the same number.
+                            onChange({ unit: unit as Unit, interval: convertInterval(settings.interval, settings.unit, unit as Unit) });
                         }}
                     >
                         <ButtonGroupItem id="m">m</ButtonGroupItem>

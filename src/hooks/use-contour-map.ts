@@ -16,7 +16,7 @@ import {
 } from "@/lib/contours/constants";
 import { ContourWorkerClient } from "@/lib/contours/contour-client";
 import { contoursToSvg, drawContours, hasBathymetry } from "@/lib/contours/draw";
-import { canvasToPngBlob, contoursToGeoJson, downloadBlob, downloadText } from "@/lib/contours/export";
+import { contoursToGeoJson, contoursToPngBlob, downloadBlob, downloadText } from "@/lib/contours/export";
 import { formatHash, parseHash } from "@/lib/contours/hash";
 import { TerrariumLayer } from "@/lib/contours/terrarium-layer";
 import type { ContourData, ContourProblem, ContourResult, ContourSettings, MapPosition } from "@/lib/contours/types";
@@ -370,9 +370,11 @@ export function useContourMap(settings: ContourSettings): ContourMap {
     }, []);
 
     const downloadPng = useCallback(async () => {
-        const canvas = contourCanvasRef.current;
-        if (!canvas) return;
-        downloadBlob(await canvasToPngBlob(canvas, CANVAS_BUFFER), "contours.png");
+        const data = dataRef.current;
+        if (!data) return;
+        // At least 2×, and sharper still on denser displays, so the PNG isn't the soft 1× screen canvas.
+        const pixelRatio = Math.max(2, window.devicePixelRatio || 1);
+        downloadBlob(await contoursToPngBlob(data, settingsRef.current, CANVAS_BUFFER, pixelRatio), "contours.png");
     }, []);
 
     const downloadSvg = useCallback(() => {

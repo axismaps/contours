@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useContourMap } from "@/hooks/use-contour-map";
 import { DEFAULT_SETTINGS } from "@/lib/contours/constants";
 import type { PlaceResult } from "@/lib/contours/geocode";
@@ -10,7 +10,7 @@ import { DownloadPanel } from "./download-panel";
 import { MapView } from "./map-view";
 import { SidePanel } from "./side-panel";
 import { StylePanel } from "./style-panel";
-import { type PanelId, ToolRail } from "./tool-rail";
+import { type PanelId, ToolRail, railButtonId } from "./tool-rail";
 
 /** Open the Style panel on first load where it won't cover the map. */
 const initialPanel = (): PanelId | null => (typeof window !== "undefined" && window.matchMedia("(min-width: 720px)").matches ? "style" : null);
@@ -23,6 +23,20 @@ export const ContoursApp = () => {
     const updateSettings = useCallback((patch: Partial<ContourSettings>) => setSettings((current) => ({ ...current, ...patch })), []);
     const togglePanel = useCallback((id: PanelId) => setPanel((current) => (current === id ? null : id)), []);
     const closePanel = useCallback(() => setPanel(null), []);
+
+    // Escape anywhere on the page closes the open panel and hands focus back to its rail
+    // button. Listening on the window catches it even when nothing is focused; popovers
+    // and menus handle their own Escape first and mark it handled.
+    useEffect(() => {
+        if (!panel) return;
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== "Escape" || event.defaultPrevented) return;
+            setPanel(null);
+            document.getElementById(railButtonId(panel))?.focus();
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [panel]);
 
     const goToPlace = useCallback(
         (place: PlaceResult) => {
@@ -40,6 +54,14 @@ export const ContoursApp = () => {
                 <ToolRail active={panel} onToggle={togglePanel} />
 
                 <div className="relative min-w-0 flex-1">
+                    {/* Panels come before the map in the DOM so Tab reaches their controls right after the rail. */}
+                    <SidePanel id="style" title="Style" description="Interval, lines, tints and labels." isOpen={panel === "style"} onClose={closePanel}>
+                        <StylePanel settings={settings} onChange={updateSettings} hasBathymetry={map.hasBathymetry} />
+                    </SidePanel>
+                    <SidePanel id="download" title="Download" description="Export what's on screen." isOpen={panel === "download"} onClose={closePanel}>
+                        <DownloadPanel actions={map.actions} hasContours={map.hasContours} isDrawing={map.isDrawing} />
+                    </SidePanel>
+
                     <MapView
                         containerRef={map.containerRef}
                         isDrawing={map.isDrawing}
@@ -48,13 +70,6 @@ export const ContoursApp = () => {
                         unit={settings.unit}
                         panelOpen={panel !== null}
                     />
-
-                    <SidePanel id="style" title="Style" description="Interval, lines, tints and labels." isOpen={panel === "style"} onClose={closePanel}>
-                        <StylePanel settings={settings} onChange={updateSettings} hasBathymetry={map.hasBathymetry} />
-                    </SidePanel>
-                    <SidePanel id="download" title="Download" description="Export what's on screen." isOpen={panel === "download"} onClose={closePanel}>
-                        <DownloadPanel actions={map.actions} hasContours={map.hasContours} isDrawing={map.isDrawing} />
-                    </SidePanel>
                 </div>
             </div>
         </div>

@@ -52,8 +52,12 @@ export function fillFor(value: number, style: ResolvedStyle): string | null {
 
 const isIndexLine = (value: number, indexInterval: number) => indexInterval !== 0 && value % indexInterval === 0;
 
-/** Draw the contours onto a canvas the size of `data.width` × `data.height`. */
-export function drawContours(ctx: CanvasRenderingContext2D, data: ContourData, settings: ContourSettings): void {
+/**
+ * Draw the contours onto a canvas the size of `data.width` × `data.height`.
+ * `pixelRatio` is the scale already applied to `ctx` when rendering at a
+ * higher resolution; canvas shadows ignore the transform, so they need it.
+ */
+export function drawContours(ctx: CanvasRenderingContext2D, data: ContourData, settings: ContourSettings, pixelRatio = 1): void {
     const style = resolveStyle(data, settings);
     const path = geoPath<unknown, ContourMultiPolygon>().context(ctx);
     const { contours } = data;
@@ -66,9 +70,9 @@ export function drawContours(ctx: CanvasRenderingContext2D, data: ContourData, s
         // A light stroke first, then the fill with a drop shadow: one edge of each
         // band reads as lit and the other as shaded, so the terrain looks raised.
         ctx.lineWidth = settings.shadowWidth + 1;
-        ctx.shadowBlur = settings.shadowWidth;
-        ctx.shadowOffsetX = settings.shadowWidth;
-        ctx.shadowOffsetY = settings.shadowWidth;
+        ctx.shadowBlur = settings.shadowWidth * pixelRatio;
+        ctx.shadowOffsetX = settings.shadowWidth * pixelRatio;
+        ctx.shadowOffsetY = settings.shadowWidth * pixelRatio;
 
         for (const c of contours) {
             const underwater = c.value < 0 && style.bathymetry !== "none";
