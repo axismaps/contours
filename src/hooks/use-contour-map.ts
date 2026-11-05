@@ -2,13 +2,14 @@
 
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { computeContours } from "@/lib/contours/compute";
 import { CANVAS_BUFFER, ESRI_ATTRIBUTION, ESRI_PLACES_URL, ESRI_ROADS_URL, MAX_ZOOM, REDRAW_DELAY_MS, randomExampleLocation } from "@/lib/contours/constants";
+import { ContourWorkerClient } from "@/lib/contours/contour-client";
 import { contoursToSvg, drawContours, hasBathymetry } from "@/lib/contours/draw";
 import { canvasToPngBlob, contoursToGeoJson, downloadBlob, downloadText } from "@/lib/contours/export";
 import { formatHash, parseHash } from "@/lib/contours/hash";
 import { TerrariumLayer } from "@/lib/contours/terrarium-layer";
-import type { ContourData, ContourSettings, MapPosition } from "@/lib/contours/types";
+import type { ContourData, ContourProblem, ContourResult, ContourSettings, MapPosition } from "@/lib/contours/types";
+import type { PixelGrid } from "@/lib/contours/worker-protocol";
 
 /**
  * How much work a pending redraw needs. A heavier request always wins over a
@@ -28,8 +29,10 @@ export interface ContourMapActions {
 
 export interface ContourMap {
     containerRef: RefObject<HTMLDivElement | null>;
-    /** True while elevation data is being rasterized or contours computed. */
+    /** True from the moment a redraw is scheduled until its contours are on screen. */
     isDrawing: boolean;
+    /** Why the current view has no contours, when that is worth telling the user. */
+    problem: ContourProblem | null;
     /** True when the current view contains elevations below sea level. */
     hasBathymetry: boolean;
     actions: ContourMapActions;
@@ -41,7 +44,8 @@ const needsRecompute = (a: ContourSettings, b: ContourSettings) => a.interval !=
 /**
  * Owns the Leaflet map, the hidden elevation layer, the reference overlay and
  * the contour canvas. Re-runs the elevation → contours → canvas pipeline,
- * debounced, whenever the view or the settings change.
+ * debounced, whenever the view or the settings change. Rasterizing the tiles
+ * and drawing happen here; decoding and contouring run in a Web Worker.
  */
 export function useContourMap(settings: ContourSettings): ContourMap {
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -50,16 +54,21 @@ export function useContourMap(settings: ContourSettings): ContourMap {
     const referenceLayerRef = useRef<L.LayerGroup | null>(null);
     const contourCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const demCanvasRef = useRef<HTMLCanvasElement | null>(null);
-    const demPixelsRef = useRef<Uint8ClampedArray | null>(null);
     const dataRef = useRef<ContourData | null>(null);
+    const workerRef = useRef<ContourWorkerClient | null>(null);
 
     const settingsRef = useRef(settings);
     const previousSettingsRef = useRef<ContourSettings | null>(null);
     const timerRef = useRef<number | null>(null);
     const pendingWorkRef = useRef<Work>(Work.Draw);
+    /** Bumped when the view changes, so contours computed for the old view are dropped when they arrive. */
+    const generationRef = useRef(0);
+    /** Worker requests posted but not yet answered. */
+    const inFlightRef = useRef(0);
 
     const [isDrawing, setIsDrawing] = useState(false);
     const [bathymetry, setBathymetry] = useState(false);
+    const [problem, setProblem] = useState<ContourProblem | null>(null);
 
     const gridSize = () => {
         const size = mapRef.current?.getSize() ?? L.point(0, 0);
@@ -86,36 +95,71 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         drawContours(ctx, data, settingsRef.current);
     };
 
-    const recomputeContours = () => {
-        const pixels = demPixelsRef.current;
-        if (!pixels) return;
-        const { width, height } = gridSize();
-        const { interval, unit } = settingsRef.current;
-        dataRef.current = computeContours(pixels, width, height, interval, unit);
+    /** Hide the status card once nothing is waiting or in flight. */
+    const settle = () => {
+        if (timerRef.current === null && inFlightRef.current === 0) setIsDrawing(false);
+    };
+
+    const applyResult = (result: ContourResult) => {
+        dataRef.current = result.status === "ok" ? result.data : null;
+        setProblem(result.status === "failed" ? result.problem : null);
         setBathymetry(dataRef.current ? hasBathymetry(dataRef.current) : false);
         draw();
     };
 
-    const rasterizeRelief = () => {
+    /** Draw the loaded tiles onto the offscreen canvas and read the pixels back. */
+    const rasterizeRelief = (): PixelGrid | null => {
         const map = mapRef.current;
         const demLayer = demLayerRef.current;
         const demCanvas = demCanvasRef.current;
         const container = containerRef.current;
         const ctx = demCanvas?.getContext("2d", { willReadFrequently: true });
-        if (!map || !demLayer || !demCanvas || !ctx || !container) return;
+        if (!map || !demLayer || !demCanvas || !ctx || !container) return null;
 
         const { width, height } = gridSize();
         ctx.clearRect(0, 0, width, height);
         resetCanvasPosition();
         demLayer.rasterize(ctx, container, map.getZoom(), CANVAS_BUFFER);
-        demPixelsRef.current = ctx.getImageData(0, 0, width, height).data;
-        recomputeContours();
+        return { pixels: ctx.getImageData(0, 0, width, height).data, width, height };
+    };
+
+    /** Post a contour computation to the worker; a new grid is sent only after re-rasterizing. */
+    const requestContours = (grid: PixelGrid | null) => {
+        const worker = workerRef.current;
+        if (!worker) return;
+        const generation = generationRef.current;
+        const { interval, unit } = settingsRef.current;
+        inFlightRef.current++;
+        worker
+            .compute({ grid: grid ?? undefined, interval, unit })
+            .then(
+                (result) => {
+                    // The map moved (or unmounted) while this was computing; its result belongs to the old view.
+                    if (generation !== generationRef.current || !mapRef.current) return;
+                    applyResult(result);
+                },
+                (error: unknown) => {
+                    if (generation !== generationRef.current || !mapRef.current) return;
+                    console.error("Contour computation failed", error);
+                    applyResult({ status: "empty" });
+                },
+            )
+            .finally(() => {
+                inFlightRef.current--;
+                settle();
+            });
     };
 
     const runWork = (work: Work) => {
-        if (work === Work.Relief) rasterizeRelief();
-        else if (work === Work.Contours) recomputeContours();
-        else draw();
+        if (work === Work.Relief) {
+            const grid = rasterizeRelief();
+            if (grid) requestContours(grid);
+        } else if (work === Work.Contours) {
+            requestContours(null);
+        } else {
+            draw();
+        }
+        settle();
     };
 
     const cancelPending = () => {
@@ -128,22 +172,15 @@ export function useContourMap(settings: ContourSettings): ContourMap {
     /** Debounce a redraw; the heaviest requested level of work is what runs. */
     const schedule = (work: Work) => {
         pendingWorkRef.current = Math.max(pendingWorkRef.current, work) as Work;
+        // A re-rasterization means the view changed: anything still computing is for the old one.
+        if (work === Work.Relief) generationRef.current++;
         cancelPending();
+        setIsDrawing(true);
         timerRef.current = window.setTimeout(() => {
             timerRef.current = null;
             const pending = pendingWorkRef.current;
             pendingWorkRef.current = Work.Draw;
-            setIsDrawing(true);
-            // Two frames so the "Drawing contours" state paints before the heavy work blocks the thread.
-            requestAnimationFrame(() =>
-                requestAnimationFrame(() => {
-                    try {
-                        runWork(pending);
-                    } finally {
-                        setIsDrawing(false);
-                    }
-                }),
-            );
+            runWork(pending);
         }, REDRAW_DELAY_MS);
     };
 
@@ -157,6 +194,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
 
         const map = L.map(container, { scrollWheelZoom: false, zoomControl: false, maxZoom: MAX_ZOOM });
         mapRef.current = map;
+        workerRef.current = new ContourWorkerClient();
         L.control.zoom({ position: "topright" }).addTo(map);
 
         const demLayer = new TerrariumLayer(() => schedule(Work.Relief));
@@ -225,14 +263,16 @@ export function useContourMap(settings: ContourSettings): ContourMap {
 
         return () => {
             cancelPending();
+            generationRef.current++;
             window.removeEventListener("hashchange", onHashChange);
+            workerRef.current?.terminate();
+            workerRef.current = null;
             map.remove();
             mapRef.current = null;
             demLayerRef.current = null;
             referenceLayerRef.current = null;
             contourCanvasRef.current = null;
             demCanvasRef.current = null;
-            demPixelsRef.current = null;
             dataRef.current = null;
         };
         // The map is created once; later changes flow through refs and the settings effect.
@@ -296,5 +336,5 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         [setView, fitBounds, downloadGeoJson, downloadPng, downloadSvg],
     );
 
-    return { containerRef, isDrawing, hasBathymetry: bathymetry, actions };
+    return { containerRef, isDrawing, problem, hasBathymetry: bathymetry, actions };
 }

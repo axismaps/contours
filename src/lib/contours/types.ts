@@ -49,6 +49,15 @@ export interface ContourData {
     height: number;
 }
 
+/** Why contours could not be computed for the current view. */
+export type ContourProblem = { kind: "too-many-thresholds"; count: number; limit: number };
+
+/**
+ * The outcome of one contour computation: contours, nothing to draw (no
+ * usable elevation data yet), or a problem the UI should explain.
+ */
+export type ContourResult = { status: "ok"; data: ContourData } | { status: "empty" } | { status: "failed"; problem: ContourProblem };
+
 export interface MapPosition {
     lat: number;
     lng: number;

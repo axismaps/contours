@@ -17,6 +17,9 @@ export const CANVAS_BUFFER = 5;
 /** Elevation bands with fewer pixels than this are treated as junk when choosing thresholds. */
 export const MIN_PIXELS_PER_BAND = 50;
 
+/** Refuse to contour a view that would need more thresholds than this; it would only hang the tab. */
+export const MAX_THRESHOLDS = 2000;
+
 /** Wait this long after the last move, tile load or setting change before recomputing. */
 export const REDRAW_DELAY_MS = 500;
 export const SEARCH_DELAY_MS = 250;
