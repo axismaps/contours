@@ -10,10 +10,10 @@ export const AppHeader = ({ onSelectPlace }: { onSelectPlace: (place: PlaceResul
     <header className="flex h-16 shrink-0 items-center gap-3 border-b border-secondary bg-primary px-4 md:gap-6 md:px-6">
         <div className="flex items-center gap-2.5">
             <ContoursLogo />
-            <h1 className="hidden text-md font-semibold text-primary sm:block">Contours</h1>
+            <h1 className="text-md font-semibold text-primary">Contours</h1>
         </div>
 
-        <div className="mx-auto w-full max-w-md">
+        <div className="mx-auto w-full max-w-md min-w-0">
             <PlaceSearch onSelect={onSelectPlace} />
         </div>
 
@@ -23,6 +23,8 @@ export const AppHeader = ({ onSelectPlace }: { onSelectPlace: (place: PlaceResul
             href={AXIS_MAPS_URL}
             target="_blank"
             rel="noopener"
+            // At least a 40px target where the text is hidden and only the logo shows.
+            className="min-h-10 min-w-10 shrink-0 justify-center"
             iconLeading={
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={AXIS_MAPS_LOGO_URL} alt="" width={20} height={20} className="size-5 shrink-0 rounded" />

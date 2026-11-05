@@ -32,10 +32,8 @@ const cardClass =
 /** The Leaflet container plus floating status cards: "Drawing contours" and why a view has none. */
 export const MapView = ({ containerRef, isDrawing, problem, interval, unit, panelOpen }: MapViewProps) => (
     <>
-        <div ref={containerRef} className="absolute inset-0 z-0 bg-primary" />
+        <div ref={containerRef} aria-busy={isDrawing} className="absolute inset-0 z-0 bg-primary" />
         <div
-            role="status"
-            aria-live="polite"
             className={cx(
                 "pointer-events-none absolute top-4 right-0 left-0 z-10 flex flex-col items-center gap-2 px-4",
                 "transition-[left] duration-300 ease-out motion-reduce:transition-none",
@@ -49,11 +47,14 @@ export const MapView = ({ containerRef, isDrawing, problem, interval, unit, pane
                     <span className="text-sm font-medium text-secondary">Drawing contours…</span>
                 </div>
             )}
-            {problem && !isDrawing && (
-                <div className={`${cardClass} max-w-sm`}>
-                    <span className="text-center text-sm font-medium text-error-primary">{describeProblem(problem, interval, unit)}</span>
-                </div>
-            )}
+            {/* Only problems are announced; the busy card would otherwise be read out on every pan. */}
+            <div role="status" aria-live="polite" className="contents">
+                {problem && !isDrawing && (
+                    <div className={`${cardClass} max-w-sm`}>
+                        <span className="text-center text-sm font-medium text-error-primary">{describeProblem(problem, interval, unit)}</span>
+                    </div>
+                )}
+            </div>
         </div>
     </>
 );

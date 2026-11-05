@@ -221,10 +221,11 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         if (!container || mapRef.current) return;
 
         // Whole zoom levels only: the elevation layer rasterizes the tiles of the map's exact zoom, so a fractional zoom would yield no contours.
-        const map = L.map(container, { zoomControl: false, maxZoom: MAX_ZOOM, zoomSnap: 1, wheelDebounceTime: WHEEL_DEBOUNCE_MS });
+        const map = L.map(container, { zoomControl: false, attributionControl: false, maxZoom: MAX_ZOOM, zoomSnap: 1, wheelDebounceTime: WHEEL_DEBOUNCE_MS });
         mapRef.current = map;
         workerRef.current = new ContourWorkerClient();
         L.control.zoom({ position: "topright" }).addTo(map);
+        L.control.attribution({ prefix: '<a href="https://leafletjs.com">Leaflet</a>' }).addTo(map);
 
         const demLayer = new TerrariumLayer(() => schedule(Work.Relief));
         demLayerRef.current = demLayer;

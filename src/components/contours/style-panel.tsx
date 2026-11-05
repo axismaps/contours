@@ -122,7 +122,11 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
                     value={settings.background}
                     onChange={(background) => onChange({ background: background as BackgroundType })}
                 >
-                    <RadioButton value="none" label="None" />
+                    <RadioButton
+                        value="none"
+                        label={illuminated ? "White" : "None"}
+                        hint={illuminated ? "Illuminated bands are always filled. Pick Solid color to change it." : undefined}
+                    />
                     <RadioButton value="solid" label="Solid color" />
                     {settings.background === "solid" && (
                         <ColorField className="pl-6" label="Fill color" value={settings.solidColor} onChange={(solidColor) => onChange({ solidColor })} />

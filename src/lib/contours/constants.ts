@@ -2,14 +2,13 @@ import type { ContourSettings, MapPosition } from "./types";
 
 /** Mapzen Terrarium elevation tiles, hosted on AWS. Keyless, max zoom 15. */
 export const TERRARIUM_TILE_URL = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
-export const TERRARIUM_ATTRIBUTION = 'Elevation: <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (Mapzen / AWS)';
+export const TERRARIUM_ATTRIBUTION = 'Elevation: <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a>';
 
 /** Esri's keyless reference overlays: shaded relief under the contours, roads and light gray place labels on top. */
 export const ESRI_HILLSHADE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}";
 export const ESRI_ROADS_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
 export const ESRI_LABELS_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
-export const ESRI_ATTRIBUTION =
-    'Hillshade, roads &amp; labels &copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, USGS, NASA, OpenStreetMap contributors';
+export const ESRI_ATTRIBUTION = 'Reference &copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, USGS, NASA, OpenStreetMap contributors';
 
 /** The hillshade is multiplied over the contours, so it only needs to be faint. */
 export const HILLSHADE_OPACITY = 0.65;

@@ -70,6 +70,25 @@ canvas#contours {
     color: var(--color-text-secondary) !important;
 }
 
+/* Reference tiles are drawn for a light map; flip them so labels and roads stay readable on dark fills. */
+.dark-mode .leaflet-labels-pane {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+/* On phones the credits wrapped to three lines over the map; keep one line and expand on tap or focus. */
+@media (max-width: 719px) {
+    .leaflet-control-attribution {
+        max-width: calc(100vw - 6rem);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .leaflet-control-attribution:hover,
+    .leaflet-control-attribution:focus-within {
+        white-space: normal;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .leaflet-zoom-anim .leaflet-zoom-animated {
         transition: none;
