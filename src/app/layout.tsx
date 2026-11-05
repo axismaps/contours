@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { RouteProvider } from "@/providers/router-provider";
 import "@/styles/globals.css";
 import { cx } from "@/utils/cx";
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <html lang="en" className="light-mode">
             <body className={cx(inter.variable, "overflow-hidden bg-primary antialiased")}>
                 <RouteProvider>{children}</RouteProvider>
+                <Analytics />
             </body>
         </html>
     );
