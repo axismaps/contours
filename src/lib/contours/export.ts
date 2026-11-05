@@ -1,5 +1,6 @@
 import type { Feature, FeatureCollection, MultiPolygon, Position } from "geojson";
-import type { ContourData } from "./types";
+import { drawContours } from "./draw";
+import type { ContourData, ContourSettings } from "./types";
 
 export type PixelToLngLat = (x: number, y: number) => [number, number];
 
@@ -20,16 +21,21 @@ export function contoursToGeoJson(data: ContourData, toLngLat: PixelToLngLat): F
     return { type: "FeatureCollection", features };
 }
 
-/** Copy the canvas without its buffer margin and encode it as a PNG. */
-export function canvasToPngBlob(source: HTMLCanvasElement, buffer: number): Promise<Blob> {
-    const cropped = document.createElement("canvas");
-    cropped.width = source.width - 2 * buffer;
-    cropped.height = source.height - 2 * buffer;
-    const ctx = cropped.getContext("2d");
+/**
+ * Render the contours to a PNG cropped to the viewport, at `pixelRatio` times
+ * the on-screen size. Transparent wherever the style has no fill.
+ */
+export function contoursToPngBlob(data: ContourData, settings: ContourSettings, buffer: number, pixelRatio: number): Promise<Blob> {
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round((data.width - 2 * buffer) * pixelRatio);
+    canvas.height = Math.round((data.height - 2 * buffer) * pixelRatio);
+    const ctx = canvas.getContext("2d");
     if (!ctx) return Promise.reject(new Error("Canvas 2D context unavailable"));
-    ctx.drawImage(source, -buffer, -buffer);
+    ctx.scale(pixelRatio, pixelRatio);
+    ctx.translate(-buffer, -buffer);
+    drawContours(ctx, data, settings, pixelRatio);
     return new Promise((resolve, reject) => {
-        cropped.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG encoding failed"))), "image/png");
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG encoding failed"))), "image/png");
     });
 }
 

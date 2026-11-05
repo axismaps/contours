@@ -4,7 +4,8 @@ import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/but
 import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-buttons";
 import { Select } from "@/components/base/select/select";
 import { Toggle } from "@/components/base/toggle/toggle";
-import { BLOG_POST_URL } from "@/lib/contours/constants";
+import { AXIS_MAPS_URL, BLOG_POST_URL } from "@/lib/contours/constants";
+import { convertInterval } from "@/lib/contours/interval";
 import type { BackgroundType, BathymetryType, ContourSettings, IndexEvery, MapType, Unit } from "@/lib/contours/types";
 import { ColorField } from "./color-field";
 import { NumberField } from "./number-field";
@@ -25,17 +26,6 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
 
     return (
         <>
-            <PanelSection title="Reference">
-                <Toggle
-                    size="sm"
-                    className="w-full [&>div:first-of-type]:shrink-0"
-                    label="Show roads and labels"
-                    hint="A guide for finding your area. Never included in downloads."
-                    isSelected={settings.showLabels}
-                    onChange={(showLabels) => onChange({ showLabels })}
-                />
-            </PanelSection>
-
             <PanelSection title="Map type">
                 <RadioGroup aria-label="Map type" value={settings.mapType} onChange={(mapType) => onChange({ mapType: mapType as MapType })}>
                     <RadioButton value="lines" label="Contour lines" hint="A line at every interval." />
@@ -50,6 +40,7 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
                         value={settings.interval}
                         onChange={(interval) => onChange({ interval })}
                         min={Number.MIN_VALUE}
+                        commitOn="blur"
                         className="flex-1"
                     />
                     <ButtonGroup
@@ -59,7 +50,9 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
                         disallowEmptySelection
                         onSelectionChange={(keys) => {
                             const unit = [...keys][0];
-                            if (unit === "m" || unit === "ft") onChange({ unit: unit as Unit });
+                            if (unit !== "m" && unit !== "ft") return;
+                            // Keep roughly the same line density rather than the same number.
+                            onChange({ unit: unit as Unit, interval: convertInterval(settings.interval, settings.unit, unit as Unit) });
                         }}
                     >
                         <ButtonGroupItem id="m">m</ButtonGroupItem>
@@ -111,7 +104,11 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
                     value={settings.background}
                     onChange={(background) => onChange({ background: background as BackgroundType })}
                 >
-                    <RadioButton value="none" label="None" />
+                    <RadioButton
+                        value="none"
+                        label={illuminated ? "White" : "None"}
+                        hint={illuminated ? "Illuminated bands are always filled. Pick Solid color to change it." : undefined}
+                    />
                     <RadioButton value="solid" label="Solid color" />
                     {settings.background === "solid" && (
                         <ColorField className="pl-6" label="Fill color" value={settings.solidColor} onChange={(solidColor) => onChange({ solidColor })} />
@@ -153,11 +150,36 @@ export const StylePanel = ({ settings, onChange, hasBathymetry }: StylePanelProp
                 </PanelSection>
             )}
 
+            <PanelSection title="Map guides" description="Help for finding your area. Never included in downloads.">
+                <Toggle
+                    size="sm"
+                    className="w-full [&>div:first-of-type]:shrink-0"
+                    label="Show hillshade"
+                    hint="Shaded relief under the contours."
+                    isSelected={settings.showHillshade}
+                    onChange={(showHillshade) => onChange({ showHillshade })}
+                />
+                <Toggle
+                    size="sm"
+                    className="w-full [&>div:first-of-type]:shrink-0"
+                    label="Show roads and labels"
+                    isSelected={settings.showLabels}
+                    onChange={(showLabels) => onChange({ showLabels })}
+                />
+            </PanelSection>
+
             <p className="border-t border-secondary px-5 py-5 text-xs text-tertiary">
                 Elevation comes from Mapzen&apos;s open terrain tiles, so contours cover the whole world.{" "}
                 <a href={BLOG_POST_URL} target="_blank" rel="noopener" className="font-medium text-brand-secondary hover:text-brand-secondary_hover">
                     How it works
                 </a>
+                <span className="block pt-2 sm:hidden">
+                    Made by{" "}
+                    <a href={AXIS_MAPS_URL} target="_blank" rel="noopener" className="font-medium text-brand-secondary hover:text-brand-secondary_hover">
+                        Axis Maps
+                    </a>
+                    .
+                </span>
             </p>
         </>
     );

@@ -13,10 +13,14 @@ interface PlaceSearchProps {
     onSelect: (place: PlaceResult) => void;
 }
 
+/** What the last search produced, so the popover can say "nothing" or "broken" instead of staying shut. */
+type SearchStatus = "idle" | "found" | "empty" | "error";
+
 /** Debounced Mapbox place search. Enter picks the first result when none is highlighted. */
 export const PlaceSearch = ({ onSelect }: PlaceSearchProps) => {
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<PlaceResult[]>([]);
+    const [status, setStatus] = useState<SearchStatus>("idle");
     const [isOpen, setIsOpen] = useState(false);
     const triggerRef = useRef<HTMLDivElement>(null);
 
@@ -24,6 +28,7 @@ export const PlaceSearch = ({ onSelect }: PlaceSearchProps) => {
         setQuery(text);
         if (text.trim().length < 2) {
             setResults([]);
+            setStatus("idle");
             setIsOpen(false);
         }
     };
@@ -37,12 +42,14 @@ export const PlaceSearch = ({ onSelect }: PlaceSearchProps) => {
                 const found = await geocodePlace(trimmed, MAPBOX_TOKEN, controller.signal);
                 if (controller.signal.aborted) return;
                 setResults(found);
-                setIsOpen(found.length > 0);
+                setStatus(found.length > 0 ? "found" : "empty");
+                setIsOpen(true);
             } catch (error) {
                 if (!controller.signal.aborted) {
                     console.error(error);
                     setResults([]);
-                    setIsOpen(false);
+                    setStatus("error");
+                    setIsOpen(true);
                 }
             }
         }, SEARCH_DELAY_MS);
@@ -57,6 +64,7 @@ export const PlaceSearch = ({ onSelect }: PlaceSearchProps) => {
         onSelect(place);
         setQuery("");
         setResults([]);
+        setStatus("idle");
         setIsOpen(false);
         (document.activeElement as HTMLElement | null)?.blur();
     };
@@ -88,7 +96,7 @@ export const PlaceSearch = ({ onSelect }: PlaceSearchProps) => {
                 <SearchLg aria-hidden="true" className="pointer-events-none absolute left-3 size-5 text-fg-quaternary" />
                 <AriaInput
                     type="search"
-                    placeholder={MAPBOX_TOKEN ? "Search for a place" : "Search needs a Mapbox token"}
+                    placeholder={MAPBOX_TOKEN ? "Search for a place" : "Search unavailable"}
                     autoComplete="off"
                     spellCheck={false}
                     onKeyDown={(event) => {
@@ -102,8 +110,15 @@ export const PlaceSearch = ({ onSelect }: PlaceSearchProps) => {
                 />
             </AriaGroup>
 
-            <Popover size="md" triggerRef={triggerRef} isOpen={isOpen && results.length > 0} onOpenChange={setIsOpen} isNonModal>
-                <AriaListBox className="size-full outline-hidden">{(place: PlaceResult) => <SelectItem id={place.id} label={place.name} />}</AriaListBox>
+            <Popover size="md" triggerRef={triggerRef} isOpen={isOpen && status !== "idle"} onOpenChange={setIsOpen} isNonModal>
+                <AriaListBox
+                    className="size-full outline-hidden"
+                    renderEmptyState={() => (
+                        <div className="px-3 py-2 text-sm text-tertiary">{status === "error" ? "Search is unavailable right now." : "No places found."}</div>
+                    )}
+                >
+                    {(place: PlaceResult) => <SelectItem id={place.id} label={place.name} />}
+                </AriaListBox>
             </Popover>
         </AriaComboBox>
     );

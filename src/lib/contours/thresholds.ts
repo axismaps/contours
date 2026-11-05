@@ -68,3 +68,18 @@ export function computeThresholds(
 
     return { status: "ok", min: thresholds[0], max: thresholds[thresholds.length - 1], thresholds };
 }
+
+/**
+ * The smallest round interval (1, 2 or 5 times a power of ten) that would bring
+ * `count` lines at `interval` down to `limit` or fewer. For the message shown
+ * when a view has too many lines.
+ */
+export function suggestInterval(count: number, limit: number, interval: number): number {
+    const needed = (count / limit) * interval;
+    const magnitude = 10 ** Math.floor(Math.log10(needed));
+    for (const step of [1, 2, 5, 10]) {
+        const candidate = step * magnitude;
+        if (candidate >= needed) return candidate;
+    }
+    return 10 * magnitude;
+}

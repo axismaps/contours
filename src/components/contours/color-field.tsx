@@ -78,7 +78,8 @@ export const ColorField = ({ label, value, onChange, className }: ColorFieldProp
             size="sm"
             label={label}
             className={className}
-            inputClassName="lowercase tabular-nums"
+            // Tighter than the default so a seven-character hex fits in the half-width fields.
+            inputClassName="px-2 lowercase tabular-nums"
             leadingAddon={swatch}
             value={draft}
             onChange={(text) => {

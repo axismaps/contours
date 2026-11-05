@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MAX_THRESHOLDS, MIN_PIXELS_PER_BAND } from "../constants";
 import { NO_DATA } from "../elevation";
-import { computeThresholds } from "../thresholds";
+import { computeThresholds, suggestInterval } from "../thresholds";
 
 /** Repeat each value `count` times, so a "band" can be given an exact pixel count. */
 const fill = (...bands: Array<[value: number, count: number]>): number[] => bands.flatMap(([value, count]) => Array<number>(count).fill(value));
@@ -79,5 +79,26 @@ describe("computeThresholds", () => {
         const result = computeThresholds([0, 1_000_000], 1, 0, 10);
         expect(result.status).toBe("failed");
         if (result.status === "failed") expect(result.problem).toEqual({ kind: "too-many-thresholds", count: 1_000_001, limit: 10 });
+    });
+});
+
+describe("suggestInterval", () => {
+    it("rounds the interval that would fit under the limit up to 1, 2 or 5 times a power of ten", () => {
+        expect(suggestInterval(3494, 2000, 1)).toBe(2);
+        expect(suggestInterval(5000, 2000, 500)).toBe(2000);
+        expect(suggestInterval(2001, 2000, 10)).toBe(20);
+        expect(suggestInterval(60_000, 2000, 1)).toBe(50);
+        expect(suggestInterval(4000, 2000, 0.25)).toBe(0.5);
+    });
+
+    it("never suggests less than what is needed", () => {
+        for (const [count, interval] of [
+            [2500, 1],
+            [19_999, 3],
+            [1_000_001, 10],
+        ] as const) {
+            const suggestion = suggestInterval(count, 2000, interval);
+            expect((count * interval) / suggestion).toBeLessThanOrEqual(2000);
+        }
     });
 });

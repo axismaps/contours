@@ -2,10 +2,21 @@
 
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { CANVAS_BUFFER, ESRI_ATTRIBUTION, ESRI_PLACES_URL, ESRI_ROADS_URL, MAX_ZOOM, REDRAW_DELAY_MS, randomExampleLocation } from "@/lib/contours/constants";
+import {
+    CANVAS_BUFFER,
+    ESRI_ATTRIBUTION,
+    ESRI_HILLSHADE_URL,
+    ESRI_LABELS_URL,
+    ESRI_ROADS_URL,
+    HILLSHADE_OPACITY,
+    MAX_ZOOM,
+    REDRAW_DELAY_MS,
+    WHEEL_DEBOUNCE_MS,
+    randomExampleLocation,
+} from "@/lib/contours/constants";
 import { ContourWorkerClient } from "@/lib/contours/contour-client";
 import { contoursToSvg, drawContours, hasBathymetry } from "@/lib/contours/draw";
-import { canvasToPngBlob, contoursToGeoJson, downloadBlob, downloadText } from "@/lib/contours/export";
+import { contoursToGeoJson, contoursToPngBlob, downloadBlob, downloadText } from "@/lib/contours/export";
 import { formatHash, parseHash } from "@/lib/contours/hash";
 import { TerrariumLayer } from "@/lib/contours/terrarium-layer";
 import type { ContourData, ContourProblem, ContourResult, ContourSettings, MapPosition } from "@/lib/contours/types";
@@ -35,6 +46,8 @@ export interface ContourMap {
     problem: ContourProblem | null;
     /** True when the current view contains elevations below sea level. */
     hasBathymetry: boolean;
+    /** True while contours for the current view are on screen and can be exported. */
+    hasContours: boolean;
     actions: ContourMapActions;
 }
 
@@ -51,6 +64,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<L.Map | null>(null);
     const demLayerRef = useRef<TerrariumLayer | null>(null);
+    const hillshadeLayerRef = useRef<L.TileLayer | null>(null);
     const referenceLayerRef = useRef<L.LayerGroup | null>(null);
     const contourCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const demCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -68,6 +82,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
 
     const [isDrawing, setIsDrawing] = useState(false);
     const [bathymetry, setBathymetry] = useState(false);
+    const [hasContours, setHasContours] = useState(false);
     const [problem, setProblem] = useState<ContourProblem | null>(null);
 
     const gridSize = () => {
@@ -100,9 +115,19 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         if (timerRef.current === null && inFlightRef.current === 0) setIsDrawing(false);
     };
 
-    const applyResult = (result: ContourResult) => {
-        dataRef.current = result.status === "ok" ? result.data : null;
+    /** The contours on screen no longer match the view; drop them so they can't be exported. */
+    const invalidateData = () => {
+        dataRef.current = null;
+        setHasContours(false);
+    };
+
+    const applyResult = (result: ContourResult, viewChanged: boolean) => {
+        if (result.status === "ok") dataRef.current = result.data;
+        // A failed recompute of the same view (say, an interval that is too fine) keeps
+        // the last good contours on screen; a failure after a move has nothing to keep.
+        else if (result.status === "empty" || viewChanged) dataRef.current = null;
         setProblem(result.status === "failed" ? result.problem : null);
+        setHasContours(dataRef.current !== null);
         setBathymetry(dataRef.current ? hasBathymetry(dataRef.current) : false);
         draw();
     };
@@ -128,6 +153,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         const worker = workerRef.current;
         if (!worker) return;
         const generation = generationRef.current;
+        const viewChanged = grid !== null;
         const { interval, unit } = settingsRef.current;
         inFlightRef.current++;
         worker
@@ -136,12 +162,12 @@ export function useContourMap(settings: ContourSettings): ContourMap {
                 (result) => {
                     // The map moved (or unmounted) while this was computing; its result belongs to the old view.
                     if (generation !== generationRef.current || !mapRef.current) return;
-                    applyResult(result);
+                    applyResult(result, viewChanged);
                 },
                 (error: unknown) => {
                     if (generation !== generationRef.current || !mapRef.current) return;
                     console.error("Contour computation failed", error);
-                    applyResult({ status: "empty" });
+                    applyResult({ status: "empty" }, viewChanged);
                 },
             )
             .finally(() => {
@@ -194,10 +220,12 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         const container = containerRef.current;
         if (!container || mapRef.current) return;
 
-        const map = L.map(container, { scrollWheelZoom: false, zoomControl: false, maxZoom: MAX_ZOOM });
+        // Whole zoom levels only: the elevation layer rasterizes the tiles of the map's exact zoom, so a fractional zoom would yield no contours.
+        const map = L.map(container, { zoomControl: false, attributionControl: false, maxZoom: MAX_ZOOM, zoomSnap: 1, wheelDebounceTime: WHEEL_DEBOUNCE_MS });
         mapRef.current = map;
         workerRef.current = new ContourWorkerClient();
         L.control.zoom({ position: "topright" }).addTo(map);
+        L.control.attribution({ prefix: '<a href="https://leafletjs.com">Leaflet</a>' }).addTo(map);
 
         const demLayer = new TerrariumLayer(() => schedule(Work.Relief));
         demLayerRef.current = demLayer;
@@ -214,12 +242,23 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         contourCanvasRef.current = contourCanvas;
         demCanvasRef.current = document.createElement("canvas");
 
+        // Shaded relief sits above the contour canvas and is multiplied into it, so it
+        // shades the fills instead of being hidden by them. Blending happens on screen
+        // only; the exports read the contour canvas alone.
+        const hillshadePane = map.createPane("hillshade");
+        hillshadePane.style.zIndex = "420";
+        hillshadePane.style.pointerEvents = "none";
+        hillshadePane.style.mixBlendMode = "multiply";
+        const hillshade = L.tileLayer(ESRI_HILLSHADE_URL, { maxZoom: MAX_ZOOM, pane: "hillshade", opacity: HILLSHADE_OPACITY, attribution: ESRI_ATTRIBUTION });
+        hillshadeLayerRef.current = hillshade;
+        if (settingsRef.current.showHillshade) hillshade.addTo(map);
+
         const labelPane = map.createPane("labels");
         labelPane.style.zIndex = "450";
         labelPane.style.pointerEvents = "none";
         const roads = L.tileLayer(ESRI_ROADS_URL, { maxZoom: MAX_ZOOM, pane: "labels", opacity: 0.5, attribution: ESRI_ATTRIBUTION });
-        const places = L.tileLayer(ESRI_PLACES_URL, { maxZoom: MAX_ZOOM, pane: "labels" });
-        const referenceLayer = L.layerGroup([roads, places]);
+        const labels = L.tileLayer(ESRI_LABELS_URL, { maxZoom: MAX_ZOOM, pane: "labels" });
+        const referenceLayer = L.layerGroup([roads, labels]);
         referenceLayerRef.current = referenceLayer;
         if (settingsRef.current.showLabels) referenceLayer.addTo(map);
 
@@ -250,14 +289,21 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         map.on("moveend", () => {
             // Clear right away; stale contours sliding around are worse than a blank map.
             contourCanvas.getContext("2d")?.clearRect(0, 0, contourCanvas.width, contourCanvas.height);
+            invalidateData();
             syncHash();
             schedule(Work.Relief);
         });
         map.on("resize", () => {
             resizeCanvases();
+            invalidateData();
             schedule(Work.Relief);
         });
         window.addEventListener("hashchange", onHashChange);
+
+        // Leaflet only watches the window for size changes; the Style sidebar opening and
+        // closing changes the container's size without one.
+        const resizeObserver = new ResizeObserver(() => map.invalidateSize({ animate: false }));
+        resizeObserver.observe(container);
 
         const start = parseHash(window.location.hash) ?? randomExampleLocation();
         map.setView([start.lat, start.lng], start.zoom);
@@ -265,6 +311,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
 
         return () => {
             cancelPending();
+            resizeObserver.disconnect();
             // A counter, not a DOM node: bumping it here is what drops results that arrive after unmount.
             // eslint-disable-next-line react-hooks/exhaustive-deps
             generationRef.current++;
@@ -274,6 +321,7 @@ export function useContourMap(settings: ContourSettings): ContourMap {
             map.remove();
             mapRef.current = null;
             demLayerRef.current = null;
+            hillshadeLayerRef.current = null;
             referenceLayerRef.current = null;
             contourCanvasRef.current = null;
             demCanvasRef.current = null;
@@ -290,6 +338,11 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         if (!previous) return;
 
         const map = mapRef.current;
+        const hillshadeLayer = hillshadeLayerRef.current;
+        if (map && hillshadeLayer && previous.showHillshade !== settings.showHillshade) {
+            if (settings.showHillshade) hillshadeLayer.addTo(map);
+            else hillshadeLayer.removeFrom(map);
+        }
         const referenceLayer = referenceLayerRef.current;
         if (map && referenceLayer && previous.showLabels !== settings.showLabels) {
             if (settings.showLabels) referenceLayer.addTo(map);
@@ -324,9 +377,11 @@ export function useContourMap(settings: ContourSettings): ContourMap {
     }, []);
 
     const downloadPng = useCallback(async () => {
-        const canvas = contourCanvasRef.current;
-        if (!canvas) return;
-        downloadBlob(await canvasToPngBlob(canvas, CANVAS_BUFFER), "contours.png");
+        const data = dataRef.current;
+        if (!data) return;
+        // At least 2×, and sharper still on denser displays, so the PNG isn't the soft 1× screen canvas.
+        const pixelRatio = Math.max(2, window.devicePixelRatio || 1);
+        downloadBlob(await contoursToPngBlob(data, settingsRef.current, CANVAS_BUFFER, pixelRatio), "contours.png");
     }, []);
 
     const downloadSvg = useCallback(() => {
@@ -340,5 +395,5 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         [setView, fitBounds, downloadGeoJson, downloadPng, downloadSvg],
     );
 
-    return { containerRef, isDrawing, problem, hasBathymetry: bathymetry, actions };
+    return { containerRef, isDrawing, problem, hasBathymetry: bathymetry, hasContours, actions };
 }
