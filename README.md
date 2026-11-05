@@ -75,7 +75,7 @@ The same code runs unchanged on Vercel: import the repository, set `NEXT_PUBLIC_
 
 - `src/lib/contours/` – the contouring pipeline, framework-free: Terrarium decoding (`elevation.ts`), threshold selection (`thresholds.ts`), d3 contouring (`compute.ts`), canvas and SVG rendering (`draw.ts`), exports (`export.ts`), the URL hash (`hash.ts`), geocoding (`geocode.ts`) and the hidden Leaflet elevation layer (`terrarium-layer.ts`).
 - `src/hooks/use-contour-map.ts` – owns the Leaflet map, the canvases and the debounced redraw pipeline, and exposes the download actions.
-- `src/components/contours/` – the app shell: header with place search, tool rail, Style and Download panels.
+- `src/components/contours/` – the app shell: header with place search and the Download menu, the collapsible Style sidebar (a bottom sheet on phones), and the map view.
 - `src/components/base/`, `src/components/application/` – Untitled UI components, added with `npx untitledui@latest add <component>`.
 - `src/styles/theme.css` – design tokens. The brand ramp is the contour brown; grays use Tailwind's warm `stone` scale.
 

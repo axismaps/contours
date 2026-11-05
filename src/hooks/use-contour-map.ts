@@ -300,12 +300,18 @@ export function useContourMap(settings: ContourSettings): ContourMap {
         });
         window.addEventListener("hashchange", onHashChange);
 
+        // Leaflet only watches the window for size changes; the Style sidebar opening and
+        // closing changes the container's size without one.
+        const resizeObserver = new ResizeObserver(() => map.invalidateSize({ animate: false }));
+        resizeObserver.observe(container);
+
         const start = parseHash(window.location.hash) ?? randomExampleLocation();
         map.setView([start.lat, start.lng], start.zoom);
         resetCanvasPosition();
 
         return () => {
             cancelPending();
+            resizeObserver.disconnect();
             // A counter, not a DOM node: bumping it here is what drops results that arrive after unmount.
             // eslint-disable-next-line react-hooks/exhaustive-deps
             generationRef.current++;
