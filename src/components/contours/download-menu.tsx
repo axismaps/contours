@@ -62,9 +62,9 @@ export const DownloadMenu = ({ actions, hasContours, isDrawing }: DownloadMenuPr
             <Button color="primary" size="sm" iconLeading={Download01} isLoading={isSaving} showTextWhileLoading aria-label="Download" className="shrink-0">
                 <span className="hidden sm:inline">Download</span>
             </Button>
-            <Popover size="lg" placement="bottom end" className="w-80 p-1">
+            <Popover size="lg" placement="bottom end" className="max-h-none! w-80 p-2">
                 {!canExport && (
-                    <p role="status" className="px-2 pt-1.5 pb-2 text-sm font-medium text-primary">
+                    <p role="status" className="px-3 pt-2 pb-3 text-sm font-medium text-primary">
                         {isDrawing ? "Downloads will be ready once the contours finish drawing." : "Nothing to download yet. Move to a view with contours."}
                     </p>
                 )}
@@ -81,7 +81,7 @@ export const DownloadMenu = ({ actions, hasContours, isDrawing }: DownloadMenuPr
                             textValue={label}
                             className={({ isFocused, isDisabled, isFocusVisible }) =>
                                 cx(
-                                    "flex cursor-pointer items-start gap-2 rounded-md p-2 pr-2.5 outline-hidden select-none",
+                                    "flex cursor-pointer items-start gap-3 rounded-lg p-3 outline-hidden select-none",
                                     isFocused && "bg-primary_hover",
                                     isDisabled && "cursor-not-allowed opacity-50",
                                     isFocusVisible && "ring-2 ring-focus-ring ring-inset",
@@ -100,7 +100,7 @@ export const DownloadMenu = ({ actions, hasContours, isDrawing }: DownloadMenuPr
                         </AriaMenuItem>
                     ))}
                 </AriaMenu>
-                <p className="mt-1 border-t border-secondary px-2 pt-2 pb-1 text-xs text-tertiary">The hillshade, roads and labels are never included.</p>
+                <p className="mt-2 border-t border-secondary px-3 pt-3 pb-1.5 text-xs text-tertiary">The hillshade, roads and labels are never included.</p>
             </Popover>
         </AriaMenuTrigger>
     );
